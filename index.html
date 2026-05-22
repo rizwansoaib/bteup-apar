@@ -129,14 +129,14 @@
         }
         .stat-card:hover { transform: translateY(-5px); box-shadow: var(--accent-glow); border-color: #00e5ff; }
         .stat-card h3 { margin: 0; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
-        .stat-card p { margin: 0.5rem 0 0; font-size: 2rem; font-weight: 800; color: #00e5ff; }
+        .stat-card p { margin: 0.5rem 0 0; font-size: 1.8rem; font-weight: 800; color: #00e5ff; }
 
         /* === CHARTS === */
         .charts-container {
             display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;
             background: rgba(0, 0, 0, 0.2); padding: 1rem; border-radius: 16px; border: 1px solid var(--glass-border);
         }
-        .chart-box { position: relative; height: 300px; width: 100%; }
+        .chart-box { position: relative; height: 350px; width: 100%; }
 
         /* === DATA TABLE === */
         .table-responsive { width: 100%; overflow-x: auto; margin-top: 1rem; border-radius: 12px; border: 1px solid var(--glass-border); }
@@ -197,13 +197,23 @@
     <button id="analyzeBtn" class="hidden">Run Analysis 🚀</button>
 
     <div id="resultsPanel" class="hidden">
+        
         <h3 class="section-title">Performance Distribution</h3>
         <div class="results-grid" id="mainStats">
-            <div class="stat-card"><h3>Total Students</h3><p id="resTotal">0</p></div>
-            <div class="stat-card"><h3>Highest Score</h3><p id="resHigh">0</p></div>
-            <div class="stat-card"><h3>Lowest Score</h3><p id="resLow">0</p></div>
+            <div class="stat-card"><h3>Total</h3><p id="resTotal">0</p></div>
             <div class="stat-card"><h3>Absent</h3><p id="resAbsent">0</p></div>
-            <div class="stat-card"><h3>Pass Rate</h3><p id="resPassRate">0%</p></div>
+            <div class="stat-card"><h3>Appeared</h3><p id="resAppeared">0</p></div>
+            <div class="stat-card"><h3>Fail (0-32%)</h3><p id="resFail">0</p></div>
+            <div class="stat-card"><h3>33% - 44%</h3><p id="res33">0</p></div>
+            <div class="stat-card"><h3>45% - 59%</h3><p id="res45">0</p></div>
+            <div class="stat-card"><h3>60% - 79%</h3><p id="res60">0</p></div>
+            <div class="stat-card"><h3>80% - 100%</h3><p id="res80">0</p></div>
+        </div>
+
+        <h3 class="section-title">APAR Metrics</h3>
+        <div class="results-grid" id="aparStats">
+            <div class="stat-card"><h3>60% - 74%</h3><p id="resApar60">0</p></div>
+            <div class="stat-card"><h3>75% & Above</h3><p id="resApar75">0</p></div>
         </div>
 
         <div class="charts-container">
@@ -251,7 +261,7 @@
         "> BYPASSING ENCRYPTION PROTOCOLS...",
         "> EXTRACTING STUDENT NODES...",
         "> ISOLATING SUBJECT HASHES...",
-        "> COMPILING METRICS...",
+        "> COMPILING APAR & PERFORMANCE METRICS...",
         "> ACCESS GRANTED."
     ];
 
@@ -305,8 +315,6 @@
         availableSubjects.clear();
         let currentStudent = null;
 
-        // Regex explicitly targeting: [Code] [Text Name] [Max] [Min] [Obtained]
-        // This ensures numbers attached to subject names don't bleed into Max Marks.
         const subjectRegex = /(?:\b|\s)(\d{5,6})\s+([A-Za-z&\-\(\)\/ ]+?)\s+(\d{2,3})\s+(\d{2,3})\s+([A-Z0-9\-]+)/g;
 
         for (let i = 0; i < lines.length; i++) {
@@ -315,7 +323,6 @@
             // Detect new student block (Roll/Enrollment Format)
             const rollMatch = line.match(/^(\d{10,15}\/E\d{10,15})/);
             if (rollMatch) {
-                // Name is always on the next line, first ~30 characters
                 const nameLine = lines[i+1] || "";
                 const rawName = nameLine.substring(0, 30).trim();
                 
@@ -373,9 +380,9 @@
             return;
         }
 
-        let total = 0, absent = 0;
-        let fail = 0, pass = 0, honors = 0;
-        let highest = -1, lowest = 999;
+        let total = 0, absent = 0, appeared = 0, failCount = 0;
+        let p33 = 0, p45 = 0, p60 = 0, p80 = 0;
+        let apar60 = 0, apar75 = 0;
         
         const tableBody = document.getElementById('tableBody');
         tableBody.innerHTML = '';
@@ -390,33 +397,37 @@
                 let numObt = -1;
                 
                 if (!isAbs) {
-                    // Handle Grace Marks (e.g., 15G-2)
                     numObt = subData.obt.includes('G-') ? parseInt(subData.obt.split('G-')[0]) : parseInt(subData.obt);
                 }
 
-                // Table Row Construction
+                // Table Row Construction & Distribution Calculation
                 const tr = document.createElement('tr');
                 let statusHtml = '';
                 let sortValue = numObt;
 
                 if (isAbs || isNaN(numObt)) {
                     absent++;
-                    highest = highest === -1 ? 0 : highest; // Ensure display
-                    lowest = lowest === 999 ? 0 : lowest;
                     statusHtml = `<span class="status-abs">ABSENT</span>`;
                     sortValue = -1;
                 } else {
-                    if (numObt > highest) highest = numObt;
-                    if (numObt < lowest) lowest = numObt;
+                    appeared++;
+                    const percentage = (numObt / subData.max) * 100;
+
+                    // Distribution Brackets
+                    if (percentage >= 80) p80++;
+                    else if (percentage >= 60) p60++;
+                    else if (percentage >= 45) p45++;
+                    else if (percentage >= 33) p33++;
+
+                    // APAR Metrics
+                    if (percentage >= 75) apar75++;
+                    else if (percentage >= 60 && percentage < 75) apar60++;
                     
                     if (numObt < subData.min) {
-                        fail++;
                         statusHtml = `<span class="status-fail">FAILED</span>`;
-                    } else if (numObt >= (subData.max * 0.75)) {
-                        honors++; pass++;
+                    } else if (percentage >= 75) {
                         statusHtml = `<span class="status-pass">HONORS</span>`;
                     } else {
-                        pass++;
                         statusHtml = `<span class="status-pass">PASSED</span>`;
                     }
                 }
@@ -433,25 +444,32 @@
             }
         });
 
-        // Ensure lowest defaults to 0 if everyone absent
-        if(lowest === 999) lowest = 0;
+        // Fail Calculation based on standard passing metrics (Appeared - Passed components)
+        failCount = appeared - (p33 + p45 + p60 + p80);
 
-        // Update Top Stats
+        // Update DOM Stats
         document.getElementById('resTotal').textContent = total;
-        document.getElementById('resHigh').textContent = highest;
-        document.getElementById('resLow').textContent = lowest;
         document.getElementById('resAbsent').textContent = absent;
-        document.getElementById('resPassRate').textContent = total - absent > 0 ? Math.round((pass / (total - absent)) * 100) + '%' : '0%';
+        document.getElementById('resAppeared').textContent = appeared;
+        document.getElementById('resFail').textContent = failCount;
+        document.getElementById('res33').textContent = p33;
+        document.getElementById('res45').textContent = p45;
+        document.getElementById('res60').textContent = p60;
+        document.getElementById('res80').textContent = p80;
+        
+        // APAR
+        document.getElementById('resApar60').textContent = apar60;
+        document.getElementById('resApar75').textContent = apar75;
 
         resultsPanel.classList.remove('hidden');
-        renderCharts(fail, pass - honors, honors, absent);
+        renderCharts(failCount, p33 + p45 + p60, p80, absent); // Grouping roughly for simplified pie
     });
 
     // TABLE SORTING LOGIC
     let sortDirection = false;
     function sortTable(columnIndex, isNumeric = false) {
         const table = document.getElementById("dataTable");
-        const rows = Array.from(table.rows).slice(1); // Skip header
+        const rows = Array.from(table.rows).slice(1); 
         
         sortDirection = !sortDirection;
 
@@ -460,7 +478,6 @@
             let valB = b.cells[columnIndex].innerText.trim();
 
             if (isNumeric) {
-                // Check hidden data-val for obtained marks sorting (handles 'AA')
                 valA = a.cells[columnIndex].getAttribute('data-val') || valA;
                 valB = b.cells[columnIndex].getAttribute('data-val') || valB;
                 return sortDirection ? valA - valB : valB - valA;
@@ -474,11 +491,10 @@
     }
 
     // CHART.JS INTEGRATION
-    function renderCharts(fail, normalPass, honors, absent) {
+    function renderCharts(fail, passed, honors, absent) {
         Chart.defaults.color = '#fff';
         Chart.defaults.font.family = 'Poppins';
 
-        // Destroy previous instances to avoid canvas overlap glitches
         if(pieChartInstance) pieChartInstance.destroy();
         if(barChartInstance) barChartInstance.destroy();
 
@@ -486,9 +502,9 @@
         pieChartInstance = new Chart(pieCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Failed', 'Passed', 'Honors (75%+)', 'Absent'],
+                labels: ['Failed (<33%)', 'Passed (33-79%)', 'Honors (80%+)', 'Absent'],
                 datasets: [{
-                    data: [fail, normalPass, honors, absent],
+                    data: [fail, passed, honors, absent],
                     backgroundColor: ['#ff0055', '#00ff88', '#00e5ff', '#ffaa00'],
                     borderWidth: 0,
                     hoverOffset: 10
@@ -496,26 +512,38 @@
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Grade Distribution' } }
+                plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Broad Outcome Distribution' } }
             }
         });
+
+        // Use precise brackets for Bar Chart
+        const p33 = parseInt(document.getElementById('res33').textContent);
+        const p45 = parseInt(document.getElementById('res45').textContent);
+        const p60 = parseInt(document.getElementById('res60').textContent);
+        const p80 = parseInt(document.getElementById('res80').textContent);
 
         const barCtx = document.getElementById('barChart').getContext('2d');
         barChartInstance = new Chart(barCtx, {
             type: 'bar',
             data: {
-                labels: ['Failed', 'Passed', 'Honors', 'Absent'],
+                labels: ['Fail (0-32%)', '33-44%', '45-59%', '60-79%', '80-100%'],
                 datasets: [{
                     label: 'Number of Students',
-                    data: [fail, normalPass, honors, absent],
-                    backgroundColor: ['rgba(255, 0, 85, 0.6)', 'rgba(0, 255, 136, 0.6)', 'rgba(0, 229, 255, 0.6)', 'rgba(255, 170, 0, 0.6)'],
-                    borderColor: ['#ff0055', '#00ff88', '#00e5ff', '#ffaa00'],
+                    data: [fail, p33, p45, p60, p80],
+                    backgroundColor: [
+                        'rgba(255, 0, 85, 0.6)', 
+                        'rgba(255, 170, 0, 0.6)', 
+                        'rgba(0, 255, 136, 0.6)', 
+                        'rgba(0, 229, 255, 0.6)', 
+                        'rgba(122, 0, 255, 0.6)'
+                    ],
+                    borderColor: ['#ff0055', '#ffaa00', '#00ff88', '#00e5ff', '#7a00ff'],
                     borderWidth: 1, borderRadius: 5
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false }, title: { display: true, text: 'Performance Overview' } },
+                plugins: { legend: { display: false }, title: { display: true, text: 'Detailed Performance Brackets' } },
                 scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } }
             }
         });
