@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BTEUP Advanced Result Analyzer </title>
+    <title>BTEUP TR Advanced Parser </title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -69,31 +69,44 @@
             text-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
         }
 
-        .dev-credit { text-align: center; font-size: 0.9rem; font-weight: 600; color: #00e5ff; margin-bottom: 2.5rem; letter-spacing: 2px; }
+        .dev-credit { text-align: center; font-size: 0.95rem; font-weight: 600; color: #00e5ff; margin-bottom: 2.5rem; letter-spacing: 1px; }
         .section-title { font-size: 1.25rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 1rem; border-bottom: 2px solid var(--glass-border); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;}
 
         /* === INPUTS & FORMS === */
         .form-group { margin-bottom: 1.5rem; position: relative; }
         label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.95rem; text-transform: uppercase; color: #00e5ff;}
         
-        input[type="file"], select, input[type="text"] {
+        input[type="file"], input[type="text"] {
             width: 100%; padding: 1rem; border: 1px solid var(--glass-border);
             border-radius: 12px; background: rgba(0, 0, 0, 0.6); color: white;
             font-family: inherit; font-size: 1rem; outline: none;
             transition: all 0.3s ease; box-sizing: border-box;
         }
 
-        input[type="text"] { margin-bottom: 0.5rem; border-color: var(--neon-purple); }
-        input[type="text"]:focus { box-shadow: 0 0 15px rgba(122, 0, 255, 0.6); }
+        input[type="text"]:focus { box-shadow: 0 0 15px rgba(0, 229, 255, 0.5); border-color: #00e5ff; }
 
         input[type="file"]::file-selector-button {
             background: #00e5ff; color: #000; border: none; padding: 0.5rem 1rem;
             border-radius: 8px; font-weight: 800; cursor: pointer; transition: all 0.2s; margin-right: 1rem;
         }
 
-        input[type="file"]:hover, select:hover, select:focus { background: rgba(0, 0, 0, 0.8); box-shadow: var(--accent-glow); border-color: #00e5ff; }
+        input[type="file"]:hover { background: rgba(0, 0, 0, 0.8); box-shadow: var(--accent-glow); border-color: #00e5ff; }
 
-        select option { background: #111; color: white; }
+        /* === AUTOCOMPLETE LIVE SEARCH === */
+        .autocomplete-container { position: relative; width: 100%; }
+        .autocomplete-items {
+            position: absolute; border: 1px solid var(--glass-border); border-radius: 12px;
+            border-top: none; z-index: 99; top: 100%; left: 0; right: 0;
+            background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(10px);
+            max-height: 250px; overflow-y: auto; box-shadow: var(--glass-shadow); display: none;
+            margin-top: 5px;
+        }
+        .autocomplete-items.active { display: block; animation: slideDown 0.3s ease forwards; }
+        .autocomplete-item { padding: 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.95rem; color: #fff; transition: all 0.2s; }
+        .autocomplete-item:hover { background: rgba(0, 229, 255, 0.2); padding-left: 20px; color: #00e5ff; }
+        .autocomplete-item:last-child { border-bottom: none; }
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         button {
             width: 100%; padding: 1.2rem; margin-top: 1rem; font-size: 1.2rem;
@@ -107,6 +120,12 @@
         @keyframes gradientShift { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
         button:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 40px rgba(0, 229, 255, 0.6); }
 
+        .btn-secondary {
+            background: rgba(0, 229, 255, 0.1); border: 1px solid #00e5ff; color: #00e5ff;
+            padding: 0.8rem; font-size: 0.9rem; margin-top: 1.5rem; box-shadow: none; animation: none;
+        }
+        .btn-secondary:hover { background: #00e5ff; color: #000; box-shadow: 0 0 15px rgba(0,229,255,0.5); transform: translateY(-2px); }
+
         /* === GRID & STATS === */
         .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; }
         .stat-card {
@@ -115,22 +134,29 @@
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative; overflow: hidden;
         }
-        .stat-card::before {
-            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
-            opacity: 0; transition: opacity 0.3s;
-        }
-        .stat-card:hover::before { opacity: 1; }
         .stat-card:hover { transform: translateY(-10px) scale(1.05); box-shadow: var(--accent-glow); border-color: #00e5ff; }
         .stat-card h3 { margin: 0; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;}
         .stat-card p { margin: 0.5rem 0 0; font-size: 2.2rem; font-weight: 800; color: #00e5ff; text-shadow: 0 0 10px rgba(0, 229, 255, 0.5); }
+
+        /* === TOPPERS LIST === */
+        .toppers-container {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;
+        }
+        .topper-card {
+            background: linear-gradient(135deg, rgba(255,0,85,0.1), rgba(122,0,255,0.1));
+            border: 1px solid var(--neon-purple); border-radius: 12px; padding: 1.2rem;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .topper-info h4 { margin: 0 0 0.2rem 0; font-size: 1.1rem; color: #fff; }
+        .topper-info p { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+        .topper-score { font-size: 1.8rem; font-weight: 800; color: #00ff88; text-shadow: 0 0 10px rgba(0,255,136,0.5); }
 
         /* === CHARTS === */
         .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; background: rgba(0, 0, 0, 0.4); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--glass-border); }
         .chart-box { position: relative; height: 350px; width: 100%; }
 
         /* === DATA TABLE === */
-        .search-container { display: flex; gap: 1rem; width: 100%; max-width: 400px; }
+        .search-container { display: flex; gap: 1rem; width: 100%; max-width: 400px; margin-top: 10px; }
         .table-responsive { width: 100%; overflow-y: auto; max-height: 500px; margin-top: 1rem; border-radius: 12px; border: 1px solid var(--glass-border); }
         table { width: 100%; border-collapse: collapse; text-align: left; background: rgba(0, 0, 0, 0.5); white-space: nowrap; }
         th, td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
@@ -141,17 +167,15 @@
         .status-fail { color: #ff0055; font-weight: 800; text-shadow: 0 0 5px rgba(255,0,85,0.5);}
         .status-abs { color: #ffaa00; font-weight: 800; text-shadow: 0 0 5px rgba(255,170,0,0.5);}
 
-        /* === FAKE HACKER OVERLAY === */
+        /* === OVERLAYS === */
         #hackerOverlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #020202; z-index: 9999; display: flex; flex-direction: column;
-            justify-content: center; align-items: flex-start; padding: 3rem; box-sizing: border-box;
-            font-family: 'Fira Code', monospace; color: var(--hacker-green); display: none;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #020202; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+            padding: 3rem; box-sizing: border-box; font-family: 'Fira Code', monospace; color: var(--hacker-green); display: none;
         }
         #hackerOverlay.active { display: flex; }
         .log-line { margin: 0.3rem 0; font-size: 1.2rem; opacity: 0; animation: typeLine 0.1s forwards; text-shadow: 0 0 5px var(--hacker-green);}
         
-        /* === DOPAMINE RELEASE OVERLAY === */
         #dopamineOverlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.9); z-index: 10000; display: none;
@@ -159,11 +183,10 @@
         }
         #dopamineOverlay.active { display: flex; animation: bgFlash 2s forwards; }
         .dopamine-text {
-            font-size: 4rem; font-weight: 900; font-style: italic;
+            font-size: 4rem; font-weight: 900; font-style: italic; text-align: center;
             background: linear-gradient(to right, #00ff88, #00e5ff);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            animation: zoomPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            opacity: 0;
+            animation: zoomPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0;
         }
         .dopamine-counter { font-size: 6rem; color: #fff; font-weight: 800; margin-top: 1rem; text-shadow: 0 0 20px #fff; }
 
@@ -173,10 +196,15 @@
 
         .hidden { display: none !important; }
 
+        /* MOBILE RESPONSIVENESS */
         @media (max-width: 768px) {
             .charts-container { grid-template-columns: 1fr; }
             .container { padding: 1.5rem; }
-            .section-title { flex-direction: column; align-items: flex-start; gap: 1rem;}
+            h2 { font-size: 1.8rem; }
+            .dopamine-text { font-size: 2.5rem; }
+            .section-title { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .search-container { max-width: 100%; }
+            .toppers-container { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -195,29 +223,37 @@
 
 <div class="container">
     <h2>BTEUP Data Analyzer</h2>
-    <div class="dev-credit">Parsing & Visualization Engine</div>
+    <div class="dev-credit">BTEUP TR Advanced Parser and Visualization Engine</div>
     
     <div class="form-group">
-        <label for="fileInput"> Upload .OUT Data Payload</label>
+        <label for="fileInput">1. Upload .OUT Data Payload</label>
         <input type="file" id="fileInput" accept=".out,.txt,.html,*/*">
     </div>
 
     <div id="subjectSelection" class="form-group hidden">
-        <label for="subjectSearch">2. Filter & Select Subject Target</label>
-        <input type="text" id="subjectSearch" placeholder="Type to filter subjects... (e.g., MATH, 328301)">
-        <select id="subjectSelect">
-            <option value="">-- Choose a Subject --</option>
-        </select>
+        <label for="subjectSearchInput">2. Search & Select Subject</label>
+        <div class="autocomplete-container">
+            <input type="text" id="subjectSearchInput" placeholder="Type to live search subjects... (e.g., MATH, 328301)" autocomplete="off">
+            <div id="autocompleteList" class="autocomplete-items"></div>
+        </div>
     </div>
+
+    <input type="hidden" id="selectedSubjectTarget">
 
     <button id="analyzeBtn" class="hidden">Start Analyzing... 🚀</button>
 
     <div id="resultsPanel" class="hidden">
-        <h3 class="section-title">Performance Data</h3>
+        
+        <h3 class="section-title">Batch Top Performers</h3>
+        <div class="toppers-container" id="toppersList">
+            </div>
+
+        <h3 class="section-title">Cognitive Performance Map</h3>
         <div class="results-grid" id="mainStats">
             <div class="stat-card"><h3>Total</h3><p id="resTotal">0</p></div>
             <div class="stat-card"><h3>Absent</h3><p id="resAbsent">0</p></div>
             <div class="stat-card"><h3>Appeared</h3><p id="resAppeared">0</p></div>
+            <div class="stat-card"><h3>Avg Score</h3><p id="resAvg">0</p></div>
             <div class="stat-card"><h3>Fail (0-32%)</h3><p id="resFail">0</p></div>
             <div class="stat-card"><h3>33% - 44%</h3><p id="res33">0</p></div>
             <div class="stat-card"><h3>45% - 59%</h3><p id="res45">0</p></div>
@@ -237,11 +273,12 @@
         </div>
 
         <h3 class="section-title">
-            Student Leaderboard 
+            <div>Student Leaderboard</div>
             <div class="search-container">
                 <input type="text" id="studentSearch" placeholder="Search Name or Roll No...">
             </div>
         </h3>
+        
         <div class="table-responsive">
             <table id="dataTable">
                 <thead>
@@ -258,18 +295,20 @@
                     </tbody>
             </table>
         </div>
+        <button id="exportCsvBtn" class="btn-secondary">Download Data as CSV 📥</button>
     </div>
 </div>
 
 <script>
     let parsedStudents = [];
-    let availableSubjects = []; // Stored as array for search filtering
+    let availableSubjects = []; 
     let pieChartInstance = null;
     let barChartInstance = null;
 
     const fileInput = document.getElementById('fileInput');
-    const subjectSearch = document.getElementById('subjectSearch');
-    const subjectSelect = document.getElementById('subjectSelect');
+    const subjectSearchInput = document.getElementById('subjectSearchInput');
+    const autocompleteList = document.getElementById('autocompleteList');
+    const selectedSubjectTarget = document.getElementById('selectedSubjectTarget');
     const studentSearch = document.getElementById('studentSearch');
     const subjectSelectionDiv = document.getElementById('subjectSelection');
     const analyzeBtn = document.getElementById('analyzeBtn');
@@ -277,18 +316,19 @@
     const overlay = document.getElementById('hackerOverlay');
     const logs = document.getElementById('terminalLogs');
     const dopamineOverlay = document.getElementById('dopamineOverlay');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
 
     const hackerLines = [
         "> ESTABLISHING NEURAL LINK TO BTEUP MAINFRAME...",
         "> DECRYPTING OUT FORMAT [██████████] 100%",
-        "> INJECTING PARSER ALGORITHM...",
+        "> INJECTING TR PARSER ALGORITHM...",
         "> ISOLATING STUDENT ENTITIES...",
         "> EXTRACTING APAR METRICS...",
         "> BYPASSING FIREWALL... SUCCESS.",
         "> DATA ACQUISITION COMPLETE."
     ];
 
-    // Simulate Terminal Analysis
+    // Terminal Simulation
     async function runTerminalSimulation(callback) {
         overlay.classList.add('active');
         logs.innerHTML = '';
@@ -299,12 +339,12 @@
             div.innerHTML = hackerLines[i];
             logs.appendChild(div);
             window.scrollTo(0, document.body.scrollHeight);
-            await new Promise(r => setTimeout(r, 300 + Math.random() * 200));
+            await new Promise(r => setTimeout(r, 250 + Math.random() * 200));
         }
-        setTimeout(() => { overlay.classList.remove('active'); callback(); }, 500);
+        setTimeout(() => { overlay.classList.remove('active'); callback(); }, 400);
     }
 
-    // High Dopamine Release Animation
+    // Dopamine Release
     async function triggerDopamineRelease(callback) {
         dopamineOverlay.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -312,7 +352,7 @@
         const counter = document.getElementById('dopamineCount');
         
         msg.style.animation = 'none';
-        void msg.offsetWidth; // Trigger reflow
+        void msg.offsetWidth;
         msg.style.animation = 'zoomPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
         
         let count = 0;
@@ -321,7 +361,7 @@
             if (count >= 100) {
                 count = 100;
                 clearInterval(interval);
-                msg.textContent = "SYNAPSE OVERLOAD SUCCESS!";
+                msg.textContent = "ANALYSIS COMPLETE!";
                 counter.textContent = "100%";
                 counter.style.color = "#00ff88";
                 
@@ -335,7 +375,7 @@
             } else {
                 counter.textContent = count + "%";
             }
-        }, 50);
+        }, 40);
     }
 
     fileInput.addEventListener('change', function(e) {
@@ -345,6 +385,7 @@
         resultsPanel.classList.add('hidden');
         subjectSelectionDiv.classList.add('hidden');
         analyzeBtn.classList.add('hidden');
+        subjectSearchInput.value = '';
 
         const reader = new FileReader();
         reader.onload = function(event) {
@@ -396,35 +437,55 @@
         }
 
         availableSubjects = Array.from(tempSubjectSet).sort();
-        renderSubjectDropdown(availableSubjects);
-    }
-
-    function renderSubjectDropdown(subjects) {
-        subjectSelect.innerHTML = '<option value="">-- Choose a Subject --</option>';
-        subjects.forEach(subj => {
-            const opt = document.createElement('option');
-            opt.value = subj; opt.textContent = subj;
-            subjectSelect.appendChild(opt);
-        });
-
-        if (subjects.length > 0) {
+        if (availableSubjects.length > 0) {
             subjectSelectionDiv.classList.remove('hidden');
-            analyzeBtn.classList.remove('hidden');
         } else {
             alert("⚠️ Parsing Error. File format mismatched.");
         }
     }
 
-    // SUBJECT SEARCH FILTER
-    subjectSearch.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtered = availableSubjects.filter(s => s.toLowerCase().includes(term));
-        renderSubjectDropdown(filtered);
+    // AUTOCOMPLETE LOGIC
+    subjectSearchInput.addEventListener('input', function() {
+        const val = this.value;
+        autocompleteList.innerHTML = '';
+        
+        if (!val) {
+            autocompleteList.classList.remove('active');
+            analyzeBtn.classList.add('hidden');
+            return;
+        }
+
+        const filtered = availableSubjects.filter(s => s.toLowerCase().includes(val.toLowerCase()));
+        
+        if(filtered.length > 0) {
+            autocompleteList.classList.add('active');
+            filtered.forEach(subj => {
+                const div = document.createElement('div');
+                div.className = 'autocomplete-item';
+                div.innerHTML = subj.replace(new RegExp(val, "gi"), match => `<strong>${match}</strong>`);
+                div.addEventListener('click', function() {
+                    subjectSearchInput.value = subj;
+                    selectedSubjectTarget.value = subj;
+                    autocompleteList.classList.remove('active');
+                    analyzeBtn.classList.remove('hidden');
+                });
+                autocompleteList.appendChild(div);
+            });
+        } else {
+            autocompleteList.classList.remove('active');
+        }
+    });
+
+    // Close autocomplete on outside click
+    document.addEventListener('click', function(e) {
+        if(e.target !== subjectSearchInput && e.target !== autocompleteList) {
+            autocompleteList.classList.remove('active');
+        }
     });
 
     analyzeBtn.addEventListener('click', function() {
-        const targetSubject = subjectSelect.value;
-        if (!targetSubject) { alert("Select a subject first."); return; }
+        const targetSubject = selectedSubjectTarget.value;
+        if (!targetSubject) { alert("Select a valid subject from the suggestions."); return; }
 
         triggerDopamineRelease(() => {
             processAnalysis(targetSubject);
@@ -435,6 +496,8 @@
         let total = 0, absent = 0, appeared = 0, failCount = 0;
         let p33 = 0, p45 = 0, p60 = 0, p80 = 0;
         let apar60 = 0, apar75 = 0;
+        let sumMarks = 0;
+        let validScoresList = []; // For toppers calculation
         
         const tableBody = document.getElementById('tableBody');
         tableBody.innerHTML = '';
@@ -462,143 +525,5 @@
                     sortValue = -1;
                 } else {
                     appeared++;
-                    const percentage = (numObt / subData.max) * 100;
-
-                    if (percentage >= 80) p80++;
-                    else if (percentage >= 60) p60++;
-                    else if (percentage >= 45) p45++;
-                    else if (percentage >= 33) p33++;
-
-                    if (percentage >= 75) apar75++;
-                    else if (percentage >= 60 && percentage < 75) apar60++;
-                    
-                    if (numObt < subData.min) {
-                        statusHtml = `<span class="status-fail">FAILED</span>`;
-                    } else if (percentage >= 75) {
-                        statusHtml = `<span class="status-pass">HONORS</span>`;
-                    } else {
-                        statusHtml = `<span class="status-pass">PASSED</span>`;
-                    }
-                }
-
-                tr.innerHTML = `
-                    <td>${student.roll}</td>
-                    <td>${student.name}</td>
-                    <td>${subData.max}</td>
-                    <td>${subData.min}</td>
-                    <td data-val="${sortValue}">${subData.obt}</td>
-                    <td>${statusHtml}</td>
-                `;
-                tableBody.appendChild(tr);
-            }
-        });
-
-        failCount = appeared - (p33 + p45 + p60 + p80);
-
-        document.getElementById('resTotal').textContent = total;
-        document.getElementById('resAbsent').textContent = absent;
-        document.getElementById('resAppeared').textContent = appeared;
-        document.getElementById('resFail').textContent = failCount;
-        document.getElementById('res33').textContent = p33;
-        document.getElementById('res45').textContent = p45;
-        document.getElementById('res60').textContent = p60;
-        document.getElementById('res80').textContent = p80;
-        document.getElementById('resApar60').textContent = apar60;
-        document.getElementById('resApar75').textContent = apar75;
-
-        resultsPanel.classList.remove('hidden');
-        
-        // Add pop animation to cards
-        document.querySelectorAll('.stat-card').forEach((card, idx) => {
-            card.style.animation = 'none';
-            setTimeout(() => { card.style.animation = 'zoomPop 0.4s ease forwards'; }, idx * 50);
-        });
-
-        renderCharts(failCount, p33 + p45 + p60, p80, absent);
-    }
-
-    // STUDENT TABLE SEARCH
-    studentSearch.addEventListener('input', function(e) {
-        const term = e.target.value.toLowerCase();
-        const rows = document.getElementById("tableBody").getElementsByTagName("tr");
-        
-        for (let row of rows) {
-            const roll = row.cells[0].textContent.toLowerCase();
-            const name = row.cells[1].textContent.toLowerCase();
-            if (roll.includes(term) || name.includes(term)) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
-        }
-    });
-
-    // TABLE SORTING
-    let sortDirection = false;
-    function sortTable(columnIndex, isNumeric = false) {
-        const table = document.getElementById("dataTable");
-        const rows = Array.from(table.rows).slice(1); 
-        sortDirection = !sortDirection;
-
-        rows.sort((a, b) => {
-            let valA = a.cells[columnIndex].innerText.trim();
-            let valB = b.cells[columnIndex].innerText.trim();
-
-            if (isNumeric) {
-                valA = a.cells[columnIndex].getAttribute('data-val') || valA;
-                valB = b.cells[columnIndex].getAttribute('data-val') || valB;
-                return sortDirection ? valA - valB : valB - valA;
-            } else {
-                return sortDirection ? valA.localeCompare(valB) : valB.localeCompare(valA);
-            }
-        });
-
-        const tbody = document.getElementById("tableBody");
-        rows.forEach(row => tbody.appendChild(row));
-    }
-
-    // CHARTS
-    function renderCharts(fail, passed, honors, absent) {
-        Chart.defaults.color = '#fff';
-        Chart.defaults.font.family = 'Poppins';
-
-        if(pieChartInstance) pieChartInstance.destroy();
-        if(barChartInstance) barChartInstance.destroy();
-
-        const pieCtx = document.getElementById('pieChart').getContext('2d');
-        pieChartInstance = new Chart(pieCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Failed', 'Passed', 'Honors', 'Absent'],
-                datasets: [{
-                    data: [fail, passed, honors, absent],
-                    backgroundColor: ['#ff0055', '#00ff88', '#00e5ff', '#ffaa00'],
-                    borderWidth: 0, hoverOffset: 15
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-        });
-
-        const p33 = parseInt(document.getElementById('res33').textContent);
-        const p45 = parseInt(document.getElementById('res45').textContent);
-        const p60 = parseInt(document.getElementById('res60').textContent);
-        const p80 = parseInt(document.getElementById('res80').textContent);
-
-        const barCtx = document.getElementById('barChart').getContext('2d');
-        barChartInstance = new Chart(barCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Fail (0-32%)', '33-44%', '45-59%', '60-79%', '80-100%'],
-                datasets: [{
-                    label: 'Students',
-                    data: [fail, p33, p45, p60, p80],
-                    backgroundColor: ['rgba(255, 0, 85, 0.8)', 'rgba(255, 170, 0, 0.8)', 'rgba(0, 255, 136, 0.8)', 'rgba(0, 229, 255, 0.8)', 'rgba(122, 0, 255, 0.8)'],
-                    borderRadius: 8
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } }
-        });
-    }
-</script>
-</body>
-</html>
+                    sumMarks += numObt;
+                    const percentage = (numObt / subData.max) *
