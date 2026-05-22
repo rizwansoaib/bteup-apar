@@ -1,392 +1,525 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BTEUP Advanced Result Analyzer | @rizwansoaib</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-/* === HIGH DOPAMINE UI/UX VARIABLES === */
-:root {
---glass-bg: rgba(255, 255, 255, 0.15);
---glass-border: rgba(255, 255, 255, 0.25);
---glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
---text-main: #ffffff;
---text-muted: rgba(255, 255, 255, 0.8);
---accent-glow: 0 0 20px rgba(0, 229, 255, 0.6);
---danger: #ff3366;
---success: #00ffcc;
---warning: #ffcc00;
-}
-body {
-font-family: 'Poppins', sans-serif;
-margin: 0;
-padding: 2rem 1rem;
-min-height: 100vh;
-display: flex;
-flex-direction: column;
-align-items: center;
-color: var(--text-main);
-background: linear-gradient(-45deg, #1a1a2e, #16213e, #0f3460, #e94560);
-background-size: 400% 400%;
-animation: gradientBG 15s ease infinite;
-}
-@keyframes gradientBG {
-0% { background-position: 0% 50%; }
-50% { background-position: 100% 50%; }
-100% { background-position: 0% 50%; }
-}
-.container {
-width: 100%;
-max-width: 1000px;
-background: var(--glass-bg);
-backdrop-filter: blur(20px);
--webkit-backdrop-filter: blur(20px);
-border: 1px solid var(--glass-border);
-border-radius: 24px;
-padding: 2.5rem;
-box-shadow: var(--glass-shadow);
-transform: translateY(20px);
-animation: floatUp 0.8s forwards;
-box-sizing: border-box;
-}
-@keyframes floatUp { to { transform: translateY(0); opacity: 1; } }
-h2 { text-align: center; font-weight: 800; font-size: 2rem; margin: 0 0 0.5rem; text-transform: uppercase; }
-.dev-credit { text-align: center; font-size: 0.9rem; font-weight: 600; color: var(--success); margin-bottom: 1.5rem; }
-.section-title { font-size: 1.25rem; font-weight: 600; margin: 2.5rem 0 1rem; border-bottom: 2px solid var(--glass-border); padding-bottom: 0.5rem; }
-.form-group { margin-bottom: 1.5rem; }
-label { display: block; font-weight: 600; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
-input[type="file"], select {
-width: 100%; padding: 1rem; border: 1px solid var(--glass-border); border-radius: 12px;
-background: rgba(0, 0, 0, 0.3); color: white; font-family: inherit; font-size: 1rem;
-outline: none; transition: all 0.3s; box-sizing: border-box; cursor: pointer;
-}
-input[type="file"]::file-selector-button {
-background: #fff; color: #16213e; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; margin-right: 1rem;
-}
-input[type="file"]:hover, select:hover, select:focus { background: rgba(0, 0, 0, 0.5); box-shadow: var(--accent-glow); }
-select option { background: #1e1e2f; color: white; }
-button {
-width: 100%; padding: 1.2rem; margin-top: 1rem; font-size: 1.1rem; font-weight: 800;
-text-transform: uppercase; color: white; background: linear-gradient(90deg, #ff007f, #7a00ff);
-border: none; border-radius: 12px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
-}
-button:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 20px rgba(255, 0, 127, 0.4); }
-.results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; }
-.stat-card {
-background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border); border-radius: 16px;
-padding: 1.5rem 1rem; text-align: center; transition: all 0.3s ease;
-}
-.stat-card:hover { transform: translateY(-5px); box-shadow: var(--accent-glow); background: rgba(255,255,255,0.1); }
-.stat-card h3 { margin: 0; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
-.stat-card p { margin: 0.5rem 0 0; font-size: 2.2rem; font-weight: 800; color: var(--success); }
-.alert-card p { color: var(--danger); }
-.warn-card p { color: var(--warning); }
-/* Chart Grid */
-.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
-.chart-container { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 1rem; border: 1px solid var(--glass-border); }
-/* Data Table */
-.table-responsive { overflow-x: auto; margin-top: 1rem; background: rgba(0,0,0,0.3); border-radius: 16px; border: 1px solid var(--glass-border); -webkit-overflow-scrolling: touch; }
-table { width: 100%; border-collapse: collapse; text-align: left; }
-th, td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
-th { background: rgba(0,0,0,0.4); color: var(--success); cursor: pointer; user-select: none; font-weight: 800; text-transform: uppercase; font-size: 0.9rem; transition: background 0.3s;}
-th:hover { background: rgba(0,0,0,0.6); color: #fff;}
-tr:hover td { background: rgba(255,255,255,0.05); }
-.badge { padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem; font-weight: bold; display: inline-block; text-align: center; min-width: 60px;}
-.badge-pass { background: rgba(0, 255, 204, 0.15); color: #00ffcc; border: 1px solid #00ffcc; }
-.badge-fail { background: rgba(255, 51, 102, 0.15); color: #ff3366; border: 1px solid #ff3366; }
-.badge-abs { background: rgba(255, 204, 0, 0.15); color: #ffcc00; border: 1px solid #ffcc00; }
-.hidden { display: none !important; }
-@media (max-width: 768px) {
-.chart-grid { grid-template-columns: 1fr; }
-.container { padding: 1.5rem; }
-th, td { padding: 0.75rem; font-size: 0.9rem; }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTEUP Advanced Result Analyzer | GetAIPrompt</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* === HIGH DOPAMINE UI/UX VARIABLES === */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.10);
+            --glass-border: rgba(255, 255, 255, 0.20);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --text-main: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.7);
+            --accent-glow: 0 0 20px rgba(0, 229, 255, 0.6);
+            --hacker-green: #0f0;
+        }
+
+        /* === ANIMATED MESH GRADIENT BACKGROUND === */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 2rem 1rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-main);
+            background: linear-gradient(-45deg, #1a0033, #001133, #33001b, #003322);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* === GLASSMORPHISM CONTAINER === */
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: var(--glass-shadow);
+            box-sizing: border-box;
+            position: relative;
+            z-index: 10;
+        }
+
+        h2 {
+            text-align: center;
+            font-weight: 800;
+            font-size: 2.2rem;
+            margin-top: 0;
+            margin-bottom: 0.2rem;
+            text-transform: uppercase;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            background: linear-gradient(to right, #00e5ff, #ff0055);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .dev-credit {
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--glass-border);
+            padding-bottom: 0.5rem;
+        }
+
+        /* === INPUTS & FORMS === */
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; color: #00e5ff;}
+        
+        input[type="file"], select {
+            width: 100%; padding: 1rem; border: 1px solid var(--glass-border);
+            border-radius: 12px; background: rgba(0, 0, 0, 0.4); color: white;
+            font-family: inherit; font-size: 1rem; outline: none;
+            transition: all 0.3s ease; box-sizing: border-box; cursor: pointer;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: #00e5ff; color: #000; border: none; padding: 0.5rem 1rem;
+            border-radius: 8px; font-weight: 800; cursor: pointer; transition: all 0.2s; margin-right: 1rem;
+        }
+
+        input[type="file"]:hover, select:hover, select:focus {
+            background: rgba(0, 0, 0, 0.6); box-shadow: var(--accent-glow); border-color: #00e5ff;
+        }
+
+        select option { background: #111; color: white; }
+
+        button {
+            width: 100%; padding: 1.2rem; margin-top: 1rem; font-size: 1.1rem;
+            font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
+            color: white; background: linear-gradient(90deg, #ff0055, #7a00ff);
+            border: none; border-radius: 12px; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(255, 0, 85, 0.4);
+            transition: all 0.2s ease; position: relative; overflow: hidden;
+        }
+
+        button:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 15px 25px rgba(255, 0, 85, 0.6); }
+        button:active { transform: translateY(2px) scale(0.98); }
+
+        /* === GRID & STATS === */
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; }
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border);
+            border-radius: 16px; padding: 1.5rem 1rem; text-align: center;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: var(--accent-glow); border-color: #00e5ff; }
+        .stat-card h3 { margin: 0; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+        .stat-card p { margin: 0.5rem 0 0; font-size: 2rem; font-weight: 800; color: #00e5ff; }
+
+        /* === CHARTS === */
+        .charts-container {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;
+            background: rgba(0, 0, 0, 0.2); padding: 1rem; border-radius: 16px; border: 1px solid var(--glass-border);
+        }
+        .chart-box { position: relative; height: 300px; width: 100%; }
+
+        /* === DATA TABLE === */
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 1rem; border-radius: 12px; border: 1px solid var(--glass-border); }
+        table { width: 100%; border-collapse: collapse; text-align: left; background: rgba(0, 0, 0, 0.3); white-space: nowrap; }
+        th, td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        th { background: rgba(0, 229, 255, 0.1); font-weight: 600; text-transform: uppercase; font-size: 0.85rem; cursor: pointer; user-select: none;}
+        th:hover { background: rgba(0, 229, 255, 0.2); }
+        th::after { content: ' ↕'; opacity: 0.5; }
+        tr:hover { background: rgba(255, 255, 255, 0.05); }
+        .status-pass { color: #00ff88; font-weight: 600; }
+        .status-fail { color: #ff0055; font-weight: 600; }
+        .status-abs { color: #ffaa00; font-weight: 600; }
+
+        /* === FAKE HACKER OVERLAY === */
+        #hackerOverlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #050505; z-index: 9999; display: flex; flex-direction: column;
+            justify-content: center; align-items: flex-start; padding: 3rem; box-sizing: border-box;
+            font-family: 'Fira Code', monospace; color: var(--hacker-green); display: none;
+        }
+        #hackerOverlay.active { display: flex; }
+        .log-line { margin: 0.3rem 0; font-size: 1.1rem; opacity: 0; animation: typeLine 0.1s forwards; }
+        .spinner { display: inline-block; animation: spin 1s linear infinite; }
+        
+        @keyframes typeLine { to { opacity: 1; } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 768px) {
+            .charts-container { grid-template-columns: 1fr; }
+            .container { padding: 1.5rem; }
+        }
+    </style>
 </head>
 <body>
+
+<div id="hackerOverlay">
+    <div id="terminalLogs"></div>
+</div>
+
 <div class="container">
-<h2>BTEUP Advanced Analyzer</h2>
-<div class="dev-credit">Developed by @rizwansoaib</div>
-<div class="form-group">
-<label>1. Select Data File (.OUT / .HTML)</label>
-<input type="file" id="fileInput" accept=".out,.txt,.html,*/*">
+    <h2>BTEUP Data Analyzer</h2>
+    <div class="dev-credit">Advanced Parsing & Visualization Engine</div>
+    
+    <div class="form-group">
+        <label for="fileInput">1. Select .OUT Data File</label>
+        <input type="file" id="fileInput" accept=".out,.txt,.html,*/*">
+    </div>
+
+    <div id="subjectSelection" class="form-group hidden">
+        <label for="subjectSelect">2. Target Subject</label>
+        <select id="subjectSelect">
+            <option value="">-- Choose a Subject --</option>
+        </select>
+    </div>
+
+    <button id="analyzeBtn" class="hidden">Run Analysis 🚀</button>
+
+    <div id="resultsPanel" class="hidden">
+        <h3 class="section-title">Performance Distribution</h3>
+        <div class="results-grid" id="mainStats">
+            <div class="stat-card"><h3>Total Students</h3><p id="resTotal">0</p></div>
+            <div class="stat-card"><h3>Highest Score</h3><p id="resHigh">0</p></div>
+            <div class="stat-card"><h3>Lowest Score</h3><p id="resLow">0</p></div>
+            <div class="stat-card"><h3>Absent</h3><p id="resAbsent">0</p></div>
+            <div class="stat-card"><h3>Pass Rate</h3><p id="resPassRate">0%</p></div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-box"><canvas id="pieChart"></canvas></div>
+            <div class="chart-box"><canvas id="barChart"></canvas></div>
+        </div>
+
+        <h3 class="section-title">Student Leaderboard & Data</h3>
+        <div class="table-responsive">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">Roll / Enroll No</th>
+                        <th onclick="sortTable(1)">Student Name</th>
+                        <th onclick="sortTable(2, true)">Max Marks</th>
+                        <th onclick="sortTable(3, true)">Min Marks</th>
+                        <th onclick="sortTable(4, true)">Obtained</th>
+                        <th onclick="sortTable(5)">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
 </div>
-<div id="subjectSelection" class="form-group hidden">
-<label>2. Target Subject</label>
-<select id="subjectSelect"><option value="">-- Choose a Subject --</option></select>
-</div>
-<button id="analyzeBtn" class="hidden">Run Deep Analysis 🚀</button>
-<div id="resultsPanel" class="hidden">
-<h3 class="section-title">Overall Extracted Metrics</h3>
-<div class="results-grid">
-<div class="stat-card"><h3>Highest Mark</h3><p id="statMax">0</p></div>
-<div class="stat-card"><h3>Lowest Mark</h3><p id="statMin">0</p></div>
-<div class="stat-card"><h3>Average Mark</h3><p id="statAvg">0</p></div>
-</div>
-<h3 class="section-title">Performance Distribution</h3>
-<div class="results-grid">
-<div class="stat-card"><h3>Total Students</h3><p id="resTotal">0</p></div>
-<div class="stat-card"><h3>Appeared</h3><p id="resAppeared">0</p></div>
-<div class="stat-card warn-card"><h3>Absent</h3><p id="resAbsent">0</p></div>
-<div class="stat-card alert-card"><h3>Failed</h3><p id="resFailed">0</p></div>
-<div class="stat-card"><h3>33% - 44%</h3><p id="res33">0</p></div>
-<div class="stat-card"><h3>45% - 59%</h3><p id="res45">0</p></div>
-<div class="stat-card"><h3>60% - 79%</h3><p id="res60">0</p></div>
-<div class="stat-card"><h3>80% - 100%</h3><p id="res80">0</p></div>
-</div>
-<div class="chart-grid">
-<div class="chart-container"><canvas id="pieChart"></canvas></div>
-<div class="chart-container"><canvas id="barChart"></canvas></div>
-</div>
-<h3 class="section-title">Student Master Data (Click Headers to Sort)</h3>
-<div class="table-responsive">
-<table id="studentTable">
-<thead>
-<tr>
-<th onclick="sortTable(0, 'str')">Student Name ↕</th>
-<th onclick="sortTable(1, 'num')">Max ↕</th>
-<th onclick="sortTable(2, 'num')">Min ↕</th>
-<th onclick="sortTable(3, 'num')">Obtained ↕</th>
-<th onclick="sortTable(4, 'str')">Status ↕</th>
-</tr>
-</thead>
-<tbody id="tableBody"></tbody>
-</table>
-</div>
-</div>
-</div>
+
 <script>
-let parsedStudents = [];
-let currentTableData = [];
-let pieChartInst = null;
-let barChartInst = null;
-// Advanced HTML cleaner to preserve exact Line Breaks before regex parsing
-function cleanHTMLAndPreserveLayout(htmlText) {
-let text = htmlText;
-if (/<[a-z][\s\S]*>/i.test(text)) {
-text = text.replace(/<br\s*[/]?>/gi, '\n')
-.replace(/</div>/gi, '\n')
-.replace(/</p>/gi, '\n')
-.replace(/</tr>/gi, '\n')
-.replace(/<[^>]+>/g, '');
-}
-return text.replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ');
-}
-document.getElementById('fileInput').addEventListener('change', function(e) {
-const file = e.target.files[0];
-if (!file) return;
-document.getElementById('resultsPanel').classList.add('hidden');
-const reader = new FileReader();
-reader.onload = function(event) {
-let content = event.target.result;
-let cleanText = cleanHTMLAndPreserveLayout(content);
-parseFileEngine(cleanText);
-};
-reader.readAsText(file);
-});
-function parseFileEngine(text) {
-parsedStudents = [];
-const subjectSet = new Set();
-const lines = text.split(/\r?\n/);
-let currentStudent = null;
-// Matches 10+ digits followed by / and Enrollment number
-const rollRegex = /\b(\d{10,}/[a-zA-Z0-9]+)\b/;
-// Matches Code (5-6 digits), Subject Name (letters/spaces/symbols), Max(2-3), Min(1-3), Obtained
-const subjectRegex = /\b(\d{5,6})\s+([A-Za-z\s&-().IVX0-9]+?)\s+(\d{2,3})\s+(\d{1,3})\s+([A-Za-z0-9-]{1,5})(?=\s|$)/g;
-for (let i = 0; i < lines.length; i++) {
-let line = lines[i].trim();
-if (!line) continue;
-let rollMatch = line.match(rollRegex);
-if (rollMatch) {
-let studentName = "Unknown Name";
-// Seek Student Name on the immediate next lines
-for (let j = i + 1; j < i + 4 && j < lines.length; j++) {
-let nextLine = lines[j].trim();
-if (nextLine) {
-// Looks for an uppercase name proceeding the subject code on the next line
-let nameMatch = nextLine.match(/^([A-Za-z\s.-]+)\s+\d{5,6}/);
-if (nameMatch) {
-studentName = nameMatch[1].trim();
-} else if (!nextLine.match(/^\d{5,6}/)) {
-studentName = nextLine.substring(0, 35).trim();
-}
-break;
-}
-}
-currentStudent = {
-roll: rollMatch[1],
-name: studentName,
-subjects: {}
-};
-parsedStudents.push(currentStudent);
-}
-// Extract all subjects mapped on the current line
-let match;
-while ((match = subjectRegex.exec(line)) !== null) {
-if (currentStudent) {
-let code = match[1];
-let name = match[2].trim();
-let fullSubj = code + " " + name;
-subjectSet.add(fullSubj);
-currentStudent.subjects[fullSubj] = {
-max: parseInt(match[3], 10),
-min: parseInt(match[4], 10),
-obtStr: match[5]
-};
-}
-}
-}
-const select = document.getElementById('subjectSelect');
-select.innerHTML = '<option value="">-- Select Subject --</option>';
-const sortedSubjects = Array.from(subjectSet).sort();
-sortedSubjects.forEach(subj => {
-let opt = document.createElement('option');
-opt.value = subj; opt.textContent = subj;
-select.appendChild(opt);
-});
-if(sortedSubjects.length > 0) {
-document.getElementById('subjectSelection').classList.remove('hidden');
-document.getElementById('analyzeBtn').classList.remove('hidden');
-} else {
-alert("⚠️ No subject metrics found! Please verify the file formatting.");
-document.getElementById('subjectSelection').classList.add('hidden');
-document.getElementById('analyzeBtn').classList.add('hidden');
-}
-}
-document.getElementById('analyzeBtn').addEventListener('click', function() {
-const lookup = document.getElementById('subjectSelect').value;
-if (!lookup) { alert("Select a subject first."); return; }
-currentTableData = [];
-let maxMarksGlobal = 50;
-parsedStudents.forEach(student => {
-if(student.subjects[lookup]) {
-let sData = student.subjects[lookup];
-maxMarksGlobal = sData.max;
-currentTableData.push({
-name: student.name,
-max: sData.max,
-min: sData.min,
-obtStr: sData.obtStr,
-numVal: parseMark(sData.obtStr)
-});
-}
-});
-calculateAndRender(currentTableData, maxMarksGlobal);
-});
-function parseMark(str) {
-if (!str) return -1;
-let s = str.trim().toUpperCase();
-const absFlags = ['AA', 'MW', 'A7', 'A', 'A3', 'ABS'];
-if (absFlags.includes(s)) return -1;
-if (s.includes('G-')) return parseInt(s.split('G-')[0], 10);
-let val = parseInt(s, 10);
-return isNaN(val) ? -1 : val;
-}
-function calculateAndRender(dataArray, maxMarks) {
-let num_abs = 0, num_33_44 = 0, num_45_59 = 0, num_60_79 = 0, num_80_100 = 0;
-let validNums = [];
-const tbody = document.getElementById('tableBody');
-tbody.innerHTML = '';
-dataArray.forEach(row => {
-let finalMark = row.numVal;
-let statusHtml = '';
-if (finalMark === -1) {
-num_abs++;
-statusHtml = &lt;span class="badge badge-abs"&gt;Absent&lt;/span&gt;;
-} else {
-validNums.push(finalMark);
-let percentage = (finalMark / row.max) * 100;
-if (finalMark < row.min) statusHtml = &lt;span class="badge badge-fail"&gt;Failed&lt;/span&gt;;
-else statusHtml = &lt;span class="badge badge-pass"&gt;Passed&lt;/span&gt;;
-if (percentage >= 33 && percentage <= 44) num_33_44++;
-else if (percentage >= 45 && percentage <= 59) num_45_59++;
-else if (percentage >= 60 && percentage <= 79) num_60_79++;
-else if (percentage >= 80) num_80_100++;
-}
-// Append to table
-let tr = document.createElement('tr');
-tr.innerHTML = &lt;td&gt;${row.name}&lt;/td&gt; &lt;td&gt;${row.max}&lt;/td&gt; &lt;td&gt;${row.min}&lt;/td&gt; &lt;td&gt;&lt;strong&gt;${row.numVal === -1 ? row.obtStr : row.numVal}&lt;/strong&gt;&lt;/td&gt; &lt;td&gt;${statusHtml}&lt;/td&gt;;
-tbody.appendChild(tr);
-});
-// Compute aggregations
-let total = dataArray.length;
-let appeared = total - num_abs;
-let passed = num_33_44 + num_45_59 + num_60_79 + num_80_100;
-let failed = appeared - passed;
-let highest = validNums.length > 0 ? Math.max(...validNums) : 0;
-let lowest = validNums.length > 0 ? Math.min(...validNums) : 0;
-let avg = validNums.length > 0 ? (validNums.reduce((a,b)=>a+b,0) / validNums.length).toFixed(1) : 0;
-document.getElementById('statMax').textContent = highest;
-document.getElementById('statMin').textContent = lowest;
-document.getElementById('statAvg').textContent = avg;
-document.getElementById('resTotal').textContent = total;
-document.getElementById('resAppeared').textContent = appeared;
-document.getElementById('resAbsent').textContent = num_abs;
-document.getElementById('resFailed').textContent = failed;
-document.getElementById('res33').textContent = num_33_44;
-document.getElementById('res45').textContent = num_45_59;
-document.getElementById('res60').textContent = num_60_79;
-document.getElementById('res80').textContent = num_80_100;
-document.getElementById('resultsPanel').classList.remove('hidden');
-// Draw Visuals
-renderCharts(passed, failed, num_abs, num_33_44, num_45_59, num_60_79, num_80_100);
-}
-function renderCharts(passed, failed, absent, b33, b45, b60, b80) {
-Chart.defaults.color = '#ffffff';
-Chart.defaults.font.family = 'Poppins';
-if (pieChartInst) pieChartInst.destroy();
-const ctxPie = document.getElementById('pieChart').getContext('2d');
-pieChartInst = new Chart(ctxPie, {
-type: 'doughnut',
-data: {
-labels: ['Passed', 'Failed', 'Absent'],
-datasets: [{
-data: [passed, failed, absent],
-backgroundColor: ['#00ffcc', '#ff3366', '#ffcc00'],
-borderWidth: 0,
-hoverOffset: 4
-}]
-},
-options: { responsive: true, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Clearance Rate', font: {size: 16} } } }
-});
-if (barChartInst) barChartInst.destroy();
-const ctxBar = document.getElementById('barChart').getContext('2d');
-barChartInst = new Chart(ctxBar, {
-type: 'bar',
-data: {
-labels: ['33-44%', '45-59%', '60-79%', '80-100%'],
-datasets: [{
-label: 'Students Count',
-data: [b33, b45, b60, b80],
-backgroundColor: 'rgba(0, 229, 255, 0.8)',
-borderRadius: 8
-}]
-},
-options: { responsive: true, scales: { y: { beginAtZero: true, grid: {color: 'rgba(255,255,255,0.1)'} }, x: { grid: {display: false} } }, plugins: { legend: {display: false}, title: { display: true, text: 'Percentage Brackets', font: {size: 16} } } }
-});
-}
-// Dynamic Client-side Table Sorting
-let sortDir = false;
-function sortTable(colIndex, type) {
-sortDir = !sortDir;
-let tbody = document.getElementById("tableBody");
-let rows = Array.from(tbody.querySelectorAll("tr"));
-rows.sort((a, b) => {
-let valA = a.children[colIndex].innerText.trim();
-let valB = b.children[colIndex].innerText.trim();
-if (type === 'num') {
-valA = isNaN(parseFloat(valA)) ? -1 : parseFloat(valA);
-valB = isNaN(parseFloat(valB)) ? -1 : parseFloat(valB);
-return sortDir ? valA - valB : valB - valA;
-} else {
-return sortDir ? valA.localeCompare(valB) : valB.localeCompare(valA);
-}
-});
-tbody.innerHTML = '';
-rows.forEach(row => tbody.appendChild(row));
-}
+    let parsedStudents = [];
+    let availableSubjects = new Set();
+    let pieChartInstance = null;
+    let barChartInstance = null;
+
+    const fileInput = document.getElementById('fileInput');
+    const subjectSelect = document.getElementById('subjectSelect');
+    const subjectSelectionDiv = document.getElementById('subjectSelection');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const resultsPanel = document.getElementById('resultsPanel');
+    const overlay = document.getElementById('hackerOverlay');
+    const logs = document.getElementById('terminalLogs');
+
+    const hackerLines = [
+        "> INITIALIZING BTEUP PARSER MODULE...",
+        "> UPLOADING SECURE PAYLOAD [██████████] 100%",
+        "> BYPASSING ENCRYPTION PROTOCOLS...",
+        "> EXTRACTING STUDENT NODES...",
+        "> ISOLATING SUBJECT HASHES...",
+        "> COMPILING METRICS...",
+        "> ACCESS GRANTED."
+    ];
+
+    // Simulate Terminal Analysis
+    async function runTerminalSimulation(callback) {
+        overlay.classList.add('active');
+        logs.innerHTML = '';
+        
+        for (let i = 0; i < hackerLines.length; i++) {
+            const div = document.createElement('div');
+            div.className = 'log-line';
+            div.innerHTML = hackerLines[i] + (i < hackerLines.length - 1 ? ' <span class="spinner">|</span>' : '');
+            logs.appendChild(div);
+            
+            // Auto scroll
+            window.scrollTo(0, document.body.scrollHeight);
+            
+            await new Promise(r => setTimeout(r, 400 + Math.random() * 300));
+            if(logs.lastChild.querySelector('.spinner')) {
+                logs.lastChild.querySelector('.spinner').remove();
+            }
+        }
+        
+        setTimeout(() => {
+            overlay.classList.remove('active');
+            callback();
+        }, 600);
+    }
+
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        resultsPanel.classList.add('hidden');
+        subjectSelectionDiv.classList.add('hidden');
+        analyzeBtn.classList.add('hidden');
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            runTerminalSimulation(() => {
+                parseComplexData(event.target.result);
+            });
+        };
+        reader.readAsText(file);
+    });
+
+    // ROBUST DATA PARSING
+    function parseComplexData(text) {
+        const lines = text.split('\n');
+        parsedStudents = [];
+        availableSubjects.clear();
+        let currentStudent = null;
+
+        // Regex explicitly targeting: [Code] [Text Name] [Max] [Min] [Obtained]
+        // This ensures numbers attached to subject names don't bleed into Max Marks.
+        const subjectRegex = /(?:\b|\s)(\d{5,6})\s+([A-Za-z&\-\(\)\/ ]+?)\s+(\d{2,3})\s+(\d{2,3})\s+([A-Z0-9\-]+)/g;
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            
+            // Detect new student block (Roll/Enrollment Format)
+            const rollMatch = line.match(/^(\d{10,15}\/E\d{10,15})/);
+            if (rollMatch) {
+                // Name is always on the next line, first ~30 characters
+                const nameLine = lines[i+1] || "";
+                const rawName = nameLine.substring(0, 30).trim();
+                
+                currentStudent = {
+                    roll: rollMatch[1],
+                    name: rawName || "UNKNOWN",
+                    subjects: {}
+                };
+                parsedStudents.push(currentStudent);
+            }
+
+            if (currentStudent) {
+                let match;
+                while ((match = subjectRegex.exec(line)) !== null) {
+                    const code = match[1].trim();
+                    const subName = match[2].trim();
+                    const maxMarks = parseInt(match[3].trim());
+                    const minMarks = parseInt(match[4].trim());
+                    let obtained = match[5].trim();
+                    
+                    const fullSubjectName = `${code} ${subName}`;
+                    availableSubjects.add(fullSubjectName);
+                    
+                    currentStudent.subjects[fullSubjectName] = { max: maxMarks, min: minMarks, obt: obtained };
+                }
+            }
+        }
+
+        populateSubjectDropdown();
+    }
+
+    function populateSubjectDropdown() {
+        subjectSelect.innerHTML = '<option value="">-- Dropdown to Select Target Subject --</option>';
+        const sortedSubjects = Array.from(availableSubjects).sort();
+        
+        sortedSubjects.forEach(subj => {
+            const option = document.createElement('option');
+            option.value = subj;
+            option.textContent = subj;
+            subjectSelect.appendChild(option);
+        });
+
+        if (sortedSubjects.length > 0) {
+            subjectSelectionDiv.classList.remove('hidden');
+            analyzeBtn.classList.remove('hidden');
+        } else {
+            alert("⚠️ Failed to parse subjects. Please ensure the file format matches BTEUP .OUT standards.");
+        }
+    }
+
+    analyzeBtn.addEventListener('click', function() {
+        const targetSubject = subjectSelect.value;
+        if (!targetSubject) {
+            alert("Please select a subject to analyze.");
+            return;
+        }
+
+        let total = 0, absent = 0;
+        let fail = 0, pass = 0, honors = 0;
+        let highest = -1, lowest = 999;
+        
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = '';
+        
+        const absFlags = ['AA', 'MW', 'A7', 'A', 'A3', 'ABS'];
+
+        parsedStudents.forEach(student => {
+            if (student.subjects[targetSubject]) {
+                total++;
+                const subData = student.subjects[targetSubject];
+                const isAbs = absFlags.includes(subData.obt);
+                let numObt = -1;
+                
+                if (!isAbs) {
+                    // Handle Grace Marks (e.g., 15G-2)
+                    numObt = subData.obt.includes('G-') ? parseInt(subData.obt.split('G-')[0]) : parseInt(subData.obt);
+                }
+
+                // Table Row Construction
+                const tr = document.createElement('tr');
+                let statusHtml = '';
+                let sortValue = numObt;
+
+                if (isAbs || isNaN(numObt)) {
+                    absent++;
+                    highest = highest === -1 ? 0 : highest; // Ensure display
+                    lowest = lowest === 999 ? 0 : lowest;
+                    statusHtml = `<span class="status-abs">ABSENT</span>`;
+                    sortValue = -1;
+                } else {
+                    if (numObt > highest) highest = numObt;
+                    if (numObt < lowest) lowest = numObt;
+                    
+                    if (numObt < subData.min) {
+                        fail++;
+                        statusHtml = `<span class="status-fail">FAILED</span>`;
+                    } else if (numObt >= (subData.max * 0.75)) {
+                        honors++; pass++;
+                        statusHtml = `<span class="status-pass">HONORS</span>`;
+                    } else {
+                        pass++;
+                        statusHtml = `<span class="status-pass">PASSED</span>`;
+                    }
+                }
+
+                tr.innerHTML = `
+                    <td>${student.roll}</td>
+                    <td>${student.name}</td>
+                    <td>${subData.max}</td>
+                    <td>${subData.min}</td>
+                    <td data-val="${sortValue}">${subData.obt}</td>
+                    <td>${statusHtml}</td>
+                `;
+                tableBody.appendChild(tr);
+            }
+        });
+
+        // Ensure lowest defaults to 0 if everyone absent
+        if(lowest === 999) lowest = 0;
+
+        // Update Top Stats
+        document.getElementById('resTotal').textContent = total;
+        document.getElementById('resHigh').textContent = highest;
+        document.getElementById('resLow').textContent = lowest;
+        document.getElementById('resAbsent').textContent = absent;
+        document.getElementById('resPassRate').textContent = total - absent > 0 ? Math.round((pass / (total - absent)) * 100) + '%' : '0%';
+
+        resultsPanel.classList.remove('hidden');
+        renderCharts(fail, pass - honors, honors, absent);
+    });
+
+    // TABLE SORTING LOGIC
+    let sortDirection = false;
+    function sortTable(columnIndex, isNumeric = false) {
+        const table = document.getElementById("dataTable");
+        const rows = Array.from(table.rows).slice(1); // Skip header
+        
+        sortDirection = !sortDirection;
+
+        rows.sort((a, b) => {
+            let valA = a.cells[columnIndex].innerText.trim();
+            let valB = b.cells[columnIndex].innerText.trim();
+
+            if (isNumeric) {
+                // Check hidden data-val for obtained marks sorting (handles 'AA')
+                valA = a.cells[columnIndex].getAttribute('data-val') || valA;
+                valB = b.cells[columnIndex].getAttribute('data-val') || valB;
+                return sortDirection ? valA - valB : valB - valA;
+            } else {
+                return sortDirection ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            }
+        });
+
+        const tbody = document.getElementById("tableBody");
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    // CHART.JS INTEGRATION
+    function renderCharts(fail, normalPass, honors, absent) {
+        Chart.defaults.color = '#fff';
+        Chart.defaults.font.family = 'Poppins';
+
+        // Destroy previous instances to avoid canvas overlap glitches
+        if(pieChartInstance) pieChartInstance.destroy();
+        if(barChartInstance) barChartInstance.destroy();
+
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        pieChartInstance = new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Failed', 'Passed', 'Honors (75%+)', 'Absent'],
+                datasets: [{
+                    data: [fail, normalPass, honors, absent],
+                    backgroundColor: ['#ff0055', '#00ff88', '#00e5ff', '#ffaa00'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Grade Distribution' } }
+            }
+        });
+
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        barChartInstance = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Failed', 'Passed', 'Honors', 'Absent'],
+                datasets: [{
+                    label: 'Number of Students',
+                    data: [fail, normalPass, honors, absent],
+                    backgroundColor: ['rgba(255, 0, 85, 0.6)', 'rgba(0, 255, 136, 0.6)', 'rgba(0, 229, 255, 0.6)', 'rgba(255, 170, 0, 0.6)'],
+                    borderColor: ['#ff0055', '#00ff88', '#00e5ff', '#ffaa00'],
+                    borderWidth: 1, borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, title: { display: true, text: 'Performance Overview' } },
+                scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } }
+            }
+        });
+    }
 </script>
 </body>
 </html>
-
