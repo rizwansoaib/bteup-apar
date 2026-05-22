@@ -9,16 +9,18 @@
     <style>
         /* === HIGH DOPAMINE UI/UX VARIABLES === */
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.10);
-            --glass-border: rgba(255, 255, 255, 0.20);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --glass-bg: rgba(10, 10, 15, 0.6);
+            --glass-border: rgba(0, 229, 255, 0.3);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 229, 255, 0.2);
             --text-main: #ffffff;
             --text-muted: rgba(255, 255, 255, 0.7);
-            --accent-glow: 0 0 20px rgba(0, 229, 255, 0.6);
+            --accent-glow: 0 0 20px rgba(0, 229, 255, 0.8);
             --hacker-green: #0f0;
+            --neon-pink: #ff0055;
+            --neon-purple: #7a00ff;
         }
 
-        /* === ANIMATED MESH GRADIENT BACKGROUND === */
+        /* === MIND BENDING BACKGROUND === */
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
@@ -28,177 +30,190 @@
             flex-direction: column;
             align-items: center;
             color: var(--text-main);
-            background: linear-gradient(-45deg, #1a0033, #001133, #33001b, #003322);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
+            background-color: #050505;
             overflow-x: hidden;
+            position: relative;
         }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .mind-bending-bg {
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: 
+                radial-gradient(circle at center, transparent 0%, #000 70%),
+                repeating-conic-gradient(from 0deg, #111 0deg 10deg, #001133 10deg 20deg, #33001b 20deg 30deg, #003322 30deg 40deg);
+            animation: spinBg 40s linear infinite, pulseBg 5s ease-in-out infinite alternate;
+            z-index: -1;
+            opacity: 0.8;
         }
+
+        @keyframes spinBg { 100% { transform: rotate(360deg); } }
+        @keyframes pulseBg { 100% { transform: scale(1.1); filter: hue-rotate(45deg); } }
 
         /* === GLASSMORPHISM CONTAINER === */
         .container {
-            width: 100%;
-            max-width: 1100px;
+            width: 100%; max-width: 1100px;
             background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 2.5rem;
-            box-shadow: var(--glass-shadow);
-            box-sizing: border-box;
-            position: relative;
-            z-index: 10;
+            border-radius: 24px; padding: 2.5rem;
+            box-shadow: var(--glass-shadow); box-sizing: border-box;
+            position: relative; z-index: 10;
         }
 
         h2 {
-            text-align: center;
-            font-weight: 800;
-            font-size: 2.2rem;
-            margin-top: 0;
-            margin-bottom: 0.2rem;
-            text-transform: uppercase;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            background: linear-gradient(to right, #00e5ff, #ff0055);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            text-align: center; font-weight: 800; font-size: 2.5rem;
+            margin-top: 0; margin-bottom: 0.2rem; text-transform: uppercase;
+            background: linear-gradient(to right, #00e5ff, var(--neon-pink));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
         }
 
-        .dev-credit {
-            text-align: center;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-bottom: 2.5rem;
-        }
-
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-top: 2.5rem;
-            margin-bottom: 1rem;
-            border-bottom: 2px solid var(--glass-border);
-            padding-bottom: 0.5rem;
-        }
+        .dev-credit { text-align: center; font-size: 0.9rem; font-weight: 600; color: #00e5ff; margin-bottom: 2.5rem; letter-spacing: 2px; }
+        .section-title { font-size: 1.25rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 1rem; border-bottom: 2px solid var(--glass-border); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;}
 
         /* === INPUTS & FORMS === */
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; color: #00e5ff;}
+        .form-group { margin-bottom: 1.5rem; position: relative; }
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.95rem; text-transform: uppercase; color: #00e5ff;}
         
-        input[type="file"], select {
+        input[type="file"], select, input[type="text"] {
             width: 100%; padding: 1rem; border: 1px solid var(--glass-border);
-            border-radius: 12px; background: rgba(0, 0, 0, 0.4); color: white;
+            border-radius: 12px; background: rgba(0, 0, 0, 0.6); color: white;
             font-family: inherit; font-size: 1rem; outline: none;
-            transition: all 0.3s ease; box-sizing: border-box; cursor: pointer;
+            transition: all 0.3s ease; box-sizing: border-box;
         }
+
+        input[type="text"] { margin-bottom: 0.5rem; border-color: var(--neon-purple); }
+        input[type="text"]:focus { box-shadow: 0 0 15px rgba(122, 0, 255, 0.6); }
 
         input[type="file"]::file-selector-button {
             background: #00e5ff; color: #000; border: none; padding: 0.5rem 1rem;
             border-radius: 8px; font-weight: 800; cursor: pointer; transition: all 0.2s; margin-right: 1rem;
         }
 
-        input[type="file"]:hover, select:hover, select:focus {
-            background: rgba(0, 0, 0, 0.6); box-shadow: var(--accent-glow); border-color: #00e5ff;
-        }
+        input[type="file"]:hover, select:hover, select:focus { background: rgba(0, 0, 0, 0.8); box-shadow: var(--accent-glow); border-color: #00e5ff; }
 
         select option { background: #111; color: white; }
 
         button {
-            width: 100%; padding: 1.2rem; margin-top: 1rem; font-size: 1.1rem;
-            font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
-            color: white; background: linear-gradient(90deg, #ff0055, #7a00ff);
-            border: none; border-radius: 12px; cursor: pointer;
-            box-shadow: 0 10px 20px rgba(255, 0, 85, 0.4);
-            transition: all 0.2s ease; position: relative; overflow: hidden;
+            width: 100%; padding: 1.2rem; margin-top: 1rem; font-size: 1.2rem;
+            font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
+            color: white; background: linear-gradient(90deg, var(--neon-pink), var(--neon-purple), #00e5ff);
+            background-size: 200% auto; border: none; border-radius: 12px; cursor: pointer;
+            box-shadow: 0 10px 30px rgba(255, 0, 85, 0.4);
+            transition: all 0.3s ease; animation: gradientShift 3s infinite;
         }
 
-        button:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 15px 25px rgba(255, 0, 85, 0.6); }
-        button:active { transform: translateY(2px) scale(0.98); }
+        @keyframes gradientShift { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
+        button:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 40px rgba(0, 229, 255, 0.6); }
 
         /* === GRID & STATS === */
         .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; }
         .stat-card {
-            background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.5); border: 1px solid var(--glass-border);
             border-radius: 16px; padding: 1.5rem 1rem; text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; overflow: hidden;
         }
-        .stat-card:hover { transform: translateY(-5px); box-shadow: var(--accent-glow); border-color: #00e5ff; }
-        .stat-card h3 { margin: 0; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
-        .stat-card p { margin: 0.5rem 0 0; font-size: 1.8rem; font-weight: 800; color: #00e5ff; }
+        .stat-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .stat-card:hover::before { opacity: 1; }
+        .stat-card:hover { transform: translateY(-10px) scale(1.05); box-shadow: var(--accent-glow); border-color: #00e5ff; }
+        .stat-card h3 { margin: 0; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;}
+        .stat-card p { margin: 0.5rem 0 0; font-size: 2.2rem; font-weight: 800; color: #00e5ff; text-shadow: 0 0 10px rgba(0, 229, 255, 0.5); }
 
         /* === CHARTS === */
-        .charts-container {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;
-            background: rgba(0, 0, 0, 0.2); padding: 1rem; border-radius: 16px; border: 1px solid var(--glass-border);
-        }
+        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; background: rgba(0, 0, 0, 0.4); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--glass-border); }
         .chart-box { position: relative; height: 350px; width: 100%; }
 
         /* === DATA TABLE === */
-        .table-responsive { width: 100%; overflow-x: auto; margin-top: 1rem; border-radius: 12px; border: 1px solid var(--glass-border); }
-        table { width: 100%; border-collapse: collapse; text-align: left; background: rgba(0, 0, 0, 0.3); white-space: nowrap; }
+        .search-container { display: flex; gap: 1rem; width: 100%; max-width: 400px; }
+        .table-responsive { width: 100%; overflow-y: auto; max-height: 500px; margin-top: 1rem; border-radius: 12px; border: 1px solid var(--glass-border); }
+        table { width: 100%; border-collapse: collapse; text-align: left; background: rgba(0, 0, 0, 0.5); white-space: nowrap; }
         th, td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        th { background: rgba(0, 229, 255, 0.1); font-weight: 600; text-transform: uppercase; font-size: 0.85rem; cursor: pointer; user-select: none;}
-        th:hover { background: rgba(0, 229, 255, 0.2); }
-        th::after { content: ' ↕'; opacity: 0.5; }
-        tr:hover { background: rgba(255, 255, 255, 0.05); }
-        .status-pass { color: #00ff88; font-weight: 600; }
-        .status-fail { color: #ff0055; font-weight: 600; }
-        .status-abs { color: #ffaa00; font-weight: 600; }
+        th { background: rgba(0, 229, 255, 0.15); font-weight: 600; text-transform: uppercase; font-size: 0.85rem; cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 2;}
+        th:hover { background: rgba(0, 229, 255, 0.3); }
+        tr:hover { background: rgba(255, 255, 255, 0.1); transform: scale(1.01); transition: all 0.2s; box-shadow: inset 0 0 10px rgba(0,229,255,0.2);}
+        .status-pass { color: #00ff88; font-weight: 800; text-shadow: 0 0 5px rgba(0,255,136,0.5);}
+        .status-fail { color: #ff0055; font-weight: 800; text-shadow: 0 0 5px rgba(255,0,85,0.5);}
+        .status-abs { color: #ffaa00; font-weight: 800; text-shadow: 0 0 5px rgba(255,170,0,0.5);}
 
         /* === FAKE HACKER OVERLAY === */
         #hackerOverlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #050505; z-index: 9999; display: flex; flex-direction: column;
+            background: #020202; z-index: 9999; display: flex; flex-direction: column;
             justify-content: center; align-items: flex-start; padding: 3rem; box-sizing: border-box;
             font-family: 'Fira Code', monospace; color: var(--hacker-green); display: none;
         }
         #hackerOverlay.active { display: flex; }
-        .log-line { margin: 0.3rem 0; font-size: 1.1rem; opacity: 0; animation: typeLine 0.1s forwards; }
-        .spinner { display: inline-block; animation: spin 1s linear infinite; }
+        .log-line { margin: 0.3rem 0; font-size: 1.2rem; opacity: 0; animation: typeLine 0.1s forwards; text-shadow: 0 0 5px var(--hacker-green);}
         
+        /* === DOPAMINE RELEASE OVERLAY === */
+        #dopamineOverlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.9); z-index: 10000; display: none;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        #dopamineOverlay.active { display: flex; animation: bgFlash 2s forwards; }
+        .dopamine-text {
+            font-size: 4rem; font-weight: 900; font-style: italic;
+            background: linear-gradient(to right, #00ff88, #00e5ff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: zoomPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+        }
+        .dopamine-counter { font-size: 6rem; color: #fff; font-weight: 800; margin-top: 1rem; text-shadow: 0 0 20px #fff; }
+
+        @keyframes zoomPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; text-shadow: 0 0 40px #00e5ff; } }
+        @keyframes bgFlash { 0% { background: rgba(0,0,0,0.9); } 80% { background: rgba(255,255,255,0.1); } 100% { background: transparent; backdrop-filter: blur(0px); } }
         @keyframes typeLine { to { opacity: 1; } }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
 
         .hidden { display: none !important; }
 
         @media (max-width: 768px) {
             .charts-container { grid-template-columns: 1fr; }
             .container { padding: 1.5rem; }
+            .section-title { flex-direction: column; align-items: flex-start; gap: 1rem;}
         }
     </style>
 </head>
 <body>
 
+<div class="mind-bending-bg"></div>
+
 <div id="hackerOverlay">
     <div id="terminalLogs"></div>
 </div>
 
+<div id="dopamineOverlay">
+    <div class="dopamine-text" id="dopamineMsg">COMPUTING MATRICES</div>
+    <div class="dopamine-counter" id="dopamineCount">0%</div>
+</div>
+
 <div class="container">
     <h2>BTEUP Data Analyzer</h2>
-    <div class="dev-credit">Advanced Parsing & Visualization Engine</div>
+    <div class="dev-credit">Neural Parsing & Cognitive Visualization Engine</div>
     
     <div class="form-group">
-        <label for="fileInput">1. Select .OUT Data File</label>
+        <label for="fileInput">1. Upload .OUT Data Payload</label>
         <input type="file" id="fileInput" accept=".out,.txt,.html,*/*">
     </div>
 
     <div id="subjectSelection" class="form-group hidden">
-        <label for="subjectSelect">2. Target Subject</label>
+        <label for="subjectSearch">2. Filter & Select Subject Target</label>
+        <input type="text" id="subjectSearch" placeholder="Type to filter subjects... (e.g., MATH, 328301)">
         <select id="subjectSelect">
             <option value="">-- Choose a Subject --</option>
         </select>
     </div>
 
-    <button id="analyzeBtn" class="hidden">Run Analysis 🚀</button>
+    <button id="analyzeBtn" class="hidden">INITIATE DOPAMINE EXTRACT 🚀</button>
 
     <div id="resultsPanel" class="hidden">
-        
-        <h3 class="section-title">Performance Distribution</h3>
+        <h3 class="section-title">Cognitive Performance Map</h3>
         <div class="results-grid" id="mainStats">
             <div class="stat-card"><h3>Total</h3><p id="resTotal">0</p></div>
             <div class="stat-card"><h3>Absent</h3><p id="resAbsent">0</p></div>
@@ -221,7 +236,12 @@
             <div class="chart-box"><canvas id="barChart"></canvas></div>
         </div>
 
-        <h3 class="section-title">Student Leaderboard & Data</h3>
+        <h3 class="section-title">
+            Student Leaderboard 
+            <div class="search-container">
+                <input type="text" id="studentSearch" placeholder="Search Name or Roll No...">
+            </div>
+        </h3>
         <div class="table-responsive">
             <table id="dataTable">
                 <thead>
@@ -243,26 +263,29 @@
 
 <script>
     let parsedStudents = [];
-    let availableSubjects = new Set();
+    let availableSubjects = []; // Stored as array for search filtering
     let pieChartInstance = null;
     let barChartInstance = null;
 
     const fileInput = document.getElementById('fileInput');
+    const subjectSearch = document.getElementById('subjectSearch');
     const subjectSelect = document.getElementById('subjectSelect');
+    const studentSearch = document.getElementById('studentSearch');
     const subjectSelectionDiv = document.getElementById('subjectSelection');
     const analyzeBtn = document.getElementById('analyzeBtn');
     const resultsPanel = document.getElementById('resultsPanel');
     const overlay = document.getElementById('hackerOverlay');
     const logs = document.getElementById('terminalLogs');
+    const dopamineOverlay = document.getElementById('dopamineOverlay');
 
     const hackerLines = [
-        "> INITIALIZING BTEUP PARSER MODULE...",
-        "> UPLOADING SECURE PAYLOAD [██████████] 100%",
-        "> BYPASSING ENCRYPTION PROTOCOLS...",
-        "> EXTRACTING STUDENT NODES...",
-        "> ISOLATING SUBJECT HASHES...",
-        "> COMPILING APAR & PERFORMANCE METRICS...",
-        "> ACCESS GRANTED."
+        "> ESTABLISHING NEURAL LINK TO BTEUP MAINFRAME...",
+        "> DECRYPTING OUT FORMAT [██████████] 100%",
+        "> INJECTING PARSER ALGORITHM...",
+        "> ISOLATING STUDENT ENTITIES...",
+        "> EXTRACTING APAR METRICS...",
+        "> BYPASSING FIREWALL... SUCCESS.",
+        "> DATA ACQUISITION COMPLETE."
     ];
 
     // Simulate Terminal Analysis
@@ -273,22 +296,46 @@
         for (let i = 0; i < hackerLines.length; i++) {
             const div = document.createElement('div');
             div.className = 'log-line';
-            div.innerHTML = hackerLines[i] + (i < hackerLines.length - 1 ? ' <span class="spinner">|</span>' : '');
+            div.innerHTML = hackerLines[i];
             logs.appendChild(div);
-            
-            // Auto scroll
             window.scrollTo(0, document.body.scrollHeight);
-            
-            await new Promise(r => setTimeout(r, 400 + Math.random() * 300));
-            if(logs.lastChild.querySelector('.spinner')) {
-                logs.lastChild.querySelector('.spinner').remove();
-            }
+            await new Promise(r => setTimeout(r, 300 + Math.random() * 200));
         }
+        setTimeout(() => { overlay.classList.remove('active'); callback(); }, 500);
+    }
+
+    // High Dopamine Release Animation
+    async function triggerDopamineRelease(callback) {
+        dopamineOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        const msg = document.getElementById('dopamineMsg');
+        const counter = document.getElementById('dopamineCount');
         
-        setTimeout(() => {
-            overlay.classList.remove('active');
-            callback();
-        }, 600);
+        msg.style.animation = 'none';
+        void msg.offsetWidth; // Trigger reflow
+        msg.style.animation = 'zoomPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+        
+        let count = 0;
+        const interval = setInterval(() => {
+            count += Math.floor(Math.random() * 15) + 5;
+            if (count >= 100) {
+                count = 100;
+                clearInterval(interval);
+                msg.textContent = "SYNAPSE OVERLOAD SUCCESS!";
+                counter.textContent = "100%";
+                counter.style.color = "#00ff88";
+                
+                setTimeout(() => {
+                    dopamineOverlay.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                    msg.textContent = "COMPUTING MATRICES";
+                    counter.style.color = "#fff";
+                    callback();
+                }, 800);
+            } else {
+                counter.textContent = count + "%";
+            }
+        }, 50);
     }
 
     fileInput.addEventListener('change', function(e) {
@@ -308,27 +355,24 @@
         reader.readAsText(file);
     });
 
-    // ROBUST DATA PARSING
+    // PARSING LOGIC
     function parseComplexData(text) {
         const lines = text.split('\n');
         parsedStudents = [];
-        availableSubjects.clear();
+        let tempSubjectSet = new Set();
         let currentStudent = null;
 
         const subjectRegex = /(?:\b|\s)(\d{5,6})\s+([A-Za-z&\-\(\)\/ ]+?)\s+(\d{2,3})\s+(\d{2,3})\s+([A-Z0-9\-]+)/g;
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
-            
-            // Detect new student block (Roll/Enrollment Format)
             const rollMatch = line.match(/^(\d{10,15}\/E\d{10,15})/);
+            
             if (rollMatch) {
                 const nameLine = lines[i+1] || "";
-                const rawName = nameLine.substring(0, 30).trim();
-                
                 currentStudent = {
                     roll: rollMatch[1],
-                    name: rawName || "UNKNOWN",
+                    name: nameLine.substring(0, 30).trim() || "UNKNOWN",
                     subjects: {}
                 };
                 parsedStudents.push(currentStudent);
@@ -339,47 +383,55 @@
                 while ((match = subjectRegex.exec(line)) !== null) {
                     const code = match[1].trim();
                     const subName = match[2].trim();
-                    const maxMarks = parseInt(match[3].trim());
-                    const minMarks = parseInt(match[4].trim());
-                    let obtained = match[5].trim();
-                    
                     const fullSubjectName = `${code} ${subName}`;
-                    availableSubjects.add(fullSubjectName);
+                    tempSubjectSet.add(fullSubjectName);
                     
-                    currentStudent.subjects[fullSubjectName] = { max: maxMarks, min: minMarks, obt: obtained };
+                    currentStudent.subjects[fullSubjectName] = { 
+                        max: parseInt(match[3]), 
+                        min: parseInt(match[4]), 
+                        obt: match[5].trim() 
+                    };
                 }
             }
         }
 
-        populateSubjectDropdown();
+        availableSubjects = Array.from(tempSubjectSet).sort();
+        renderSubjectDropdown(availableSubjects);
     }
 
-    function populateSubjectDropdown() {
-        subjectSelect.innerHTML = '<option value="">-- Dropdown to Select Target Subject --</option>';
-        const sortedSubjects = Array.from(availableSubjects).sort();
-        
-        sortedSubjects.forEach(subj => {
-            const option = document.createElement('option');
-            option.value = subj;
-            option.textContent = subj;
-            subjectSelect.appendChild(option);
+    function renderSubjectDropdown(subjects) {
+        subjectSelect.innerHTML = '<option value="">-- Choose a Subject --</option>';
+        subjects.forEach(subj => {
+            const opt = document.createElement('option');
+            opt.value = subj; opt.textContent = subj;
+            subjectSelect.appendChild(opt);
         });
 
-        if (sortedSubjects.length > 0) {
+        if (subjects.length > 0) {
             subjectSelectionDiv.classList.remove('hidden');
             analyzeBtn.classList.remove('hidden');
         } else {
-            alert("⚠️ Failed to parse subjects. Please ensure the file format matches BTEUP .OUT standards.");
+            alert("⚠️ Parsing Error. File format mismatched.");
         }
     }
 
+    // SUBJECT SEARCH FILTER
+    subjectSearch.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const filtered = availableSubjects.filter(s => s.toLowerCase().includes(term));
+        renderSubjectDropdown(filtered);
+    });
+
     analyzeBtn.addEventListener('click', function() {
         const targetSubject = subjectSelect.value;
-        if (!targetSubject) {
-            alert("Please select a subject to analyze.");
-            return;
-        }
+        if (!targetSubject) { alert("Select a subject first."); return; }
 
+        triggerDopamineRelease(() => {
+            processAnalysis(targetSubject);
+        });
+    });
+
+    function processAnalysis(targetSubject) {
         let total = 0, absent = 0, appeared = 0, failCount = 0;
         let p33 = 0, p45 = 0, p60 = 0, p80 = 0;
         let apar60 = 0, apar75 = 0;
@@ -400,7 +452,6 @@
                     numObt = subData.obt.includes('G-') ? parseInt(subData.obt.split('G-')[0]) : parseInt(subData.obt);
                 }
 
-                // Table Row Construction & Distribution Calculation
                 const tr = document.createElement('tr');
                 let statusHtml = '';
                 let sortValue = numObt;
@@ -413,13 +464,11 @@
                     appeared++;
                     const percentage = (numObt / subData.max) * 100;
 
-                    // Distribution Brackets
                     if (percentage >= 80) p80++;
                     else if (percentage >= 60) p60++;
                     else if (percentage >= 45) p45++;
                     else if (percentage >= 33) p33++;
 
-                    // APAR Metrics
                     if (percentage >= 75) apar75++;
                     else if (percentage >= 60 && percentage < 75) apar60++;
                     
@@ -444,10 +493,8 @@
             }
         });
 
-        // Fail Calculation based on standard passing metrics (Appeared - Passed components)
         failCount = appeared - (p33 + p45 + p60 + p80);
 
-        // Update DOM Stats
         document.getElementById('resTotal').textContent = total;
         document.getElementById('resAbsent').textContent = absent;
         document.getElementById('resAppeared').textContent = appeared;
@@ -456,21 +503,41 @@
         document.getElementById('res45').textContent = p45;
         document.getElementById('res60').textContent = p60;
         document.getElementById('res80').textContent = p80;
-        
-        // APAR
         document.getElementById('resApar60').textContent = apar60;
         document.getElementById('resApar75').textContent = apar75;
 
         resultsPanel.classList.remove('hidden');
-        renderCharts(failCount, p33 + p45 + p60, p80, absent); // Grouping roughly for simplified pie
+        
+        // Add pop animation to cards
+        document.querySelectorAll('.stat-card').forEach((card, idx) => {
+            card.style.animation = 'none';
+            setTimeout(() => { card.style.animation = 'zoomPop 0.4s ease forwards'; }, idx * 50);
+        });
+
+        renderCharts(failCount, p33 + p45 + p60, p80, absent);
+    }
+
+    // STUDENT TABLE SEARCH
+    studentSearch.addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        const rows = document.getElementById("tableBody").getElementsByTagName("tr");
+        
+        for (let row of rows) {
+            const roll = row.cells[0].textContent.toLowerCase();
+            const name = row.cells[1].textContent.toLowerCase();
+            if (roll.includes(term) || name.includes(term)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        }
     });
 
-    // TABLE SORTING LOGIC
+    // TABLE SORTING
     let sortDirection = false;
     function sortTable(columnIndex, isNumeric = false) {
         const table = document.getElementById("dataTable");
         const rows = Array.from(table.rows).slice(1); 
-        
         sortDirection = !sortDirection;
 
         rows.sort((a, b) => {
@@ -490,7 +557,7 @@
         rows.forEach(row => tbody.appendChild(row));
     }
 
-    // CHART.JS INTEGRATION
+    // CHARTS
     function renderCharts(fail, passed, honors, absent) {
         Chart.defaults.color = '#fff';
         Chart.defaults.font.family = 'Poppins';
@@ -502,21 +569,16 @@
         pieChartInstance = new Chart(pieCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Failed (<33%)', 'Passed (33-79%)', 'Honors (80%+)', 'Absent'],
+                labels: ['Failed', 'Passed', 'Honors', 'Absent'],
                 datasets: [{
                     data: [fail, passed, honors, absent],
                     backgroundColor: ['#ff0055', '#00ff88', '#00e5ff', '#ffaa00'],
-                    borderWidth: 0,
-                    hoverOffset: 10
+                    borderWidth: 0, hoverOffset: 15
                 }]
             },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Broad Outcome Distribution' } }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
         });
 
-        // Use precise brackets for Bar Chart
         const p33 = parseInt(document.getElementById('res33').textContent);
         const p45 = parseInt(document.getElementById('res45').textContent);
         const p60 = parseInt(document.getElementById('res60').textContent);
@@ -528,24 +590,13 @@
             data: {
                 labels: ['Fail (0-32%)', '33-44%', '45-59%', '60-79%', '80-100%'],
                 datasets: [{
-                    label: 'Number of Students',
+                    label: 'Students',
                     data: [fail, p33, p45, p60, p80],
-                    backgroundColor: [
-                        'rgba(255, 0, 85, 0.6)', 
-                        'rgba(255, 170, 0, 0.6)', 
-                        'rgba(0, 255, 136, 0.6)', 
-                        'rgba(0, 229, 255, 0.6)', 
-                        'rgba(122, 0, 255, 0.6)'
-                    ],
-                    borderColor: ['#ff0055', '#ffaa00', '#00ff88', '#00e5ff', '#7a00ff'],
-                    borderWidth: 1, borderRadius: 5
+                    backgroundColor: ['rgba(255, 0, 85, 0.8)', 'rgba(255, 170, 0, 0.8)', 'rgba(0, 255, 136, 0.8)', 'rgba(0, 229, 255, 0.8)', 'rgba(122, 0, 255, 0.8)'],
+                    borderRadius: 8
                 }]
             },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false }, title: { display: true, text: 'Detailed Performance Brackets' } },
-                scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } }
         });
     }
 </script>
