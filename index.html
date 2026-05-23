@@ -455,9 +455,10 @@
         parsedStudents = [];
         let subjectMap = new Map();
         let currentStudent = null;
+// NEWLY ADDED CODE - REPLACES THE OLD REGEX
+// Broadened \d{2,3} to \d{1,3} to accurately capture single-digit marks like "8"
+const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(\d{1,3})\s+(\d{1,3})\s+([A-Z0-9\-]+)/g;
 
-        // UPDATED REGEX: Now parses subjects with numbers and dots in their names (e.g. Industry 4.0)
-        const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(\d{2,3})\s+(\d{2,3})\s+([A-Z0-9\-]+)/g;
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
