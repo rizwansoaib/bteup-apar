@@ -177,6 +177,68 @@
             th, td { padding: 0.75rem 0.5rem; font-size: 0.85rem; }
             .dev-credit { font-size: 0.8rem; margin-bottom: 1.5rem; }
         }
+
+
+                /* === FUTURISTIC MARKSHEET MODAL === */
+        #marksheetModal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(5, 5, 10, 0.95); z-index: 10000; display: none;
+            justify-content: center; align-items: center; padding: 1rem; box-sizing: border-box;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        }
+        #marksheetModal.active { display: flex; animation: fadeInModal 0.3s ease-out; }
+        
+        .marksheet-container {
+            width: 100%; max-width: 800px; background: rgba(0, 20, 30, 0.7);
+            border: 2px solid var(--neon-blue); border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.3), inset 0 0 20px rgba(0, 229, 255, 0.1);
+            position: relative; overflow: hidden; display: flex; flex-direction: column;
+            max-height: 90vh;
+        }
+
+        /* Scanline Animation for HUD effect */
+        .marksheet-container::after {
+            content: ""; position: absolute; top: -50%; left: 0; width: 100%; height: 200%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(0, 229, 255, 0.2) 50%, rgba(255,255,255,0));
+            animation: scanline 4s linear infinite; pointer-events: none; z-index: 5;
+        }
+
+        .marksheet-header {
+            padding: 1.5rem; background: rgba(0, 229, 255, 0.1); border-bottom: 1px solid var(--neon-blue);
+            display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;
+        }
+        
+        .student-hud-info h4 { margin: 0; color: #fff; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px var(--neon-blue); }
+        .student-hud-info p { margin: 5px 0 0; color: var(--neon-blue); font-family: 'Fira Code', monospace; font-size: 1rem; }
+        
+        .btn-close-modal {
+            background: rgba(255, 0, 85, 0.2); border: 1px solid var(--neon-pink); color: var(--neon-pink);
+            padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: 800; font-family: 'Fira Code', monospace;
+            transition: all 0.2s; z-index: 10;
+        }
+        .btn-close-modal:hover { background: var(--neon-pink); color: #fff; box-shadow: 0 0 15px var(--neon-pink); }
+
+        .marksheet-body { padding: 1.5rem; overflow-y: auto; z-index: 10; position: relative; }
+        
+        .hud-table { width: 100%; border-collapse: collapse; font-family: 'Fira Code', monospace; font-size: 0.9rem; }
+        .hud-table th { background: rgba(0, 0, 0, 0.5); color: var(--neon-blue); padding: 10px; border-bottom: 2px solid var(--neon-blue); text-transform: uppercase; }
+        .hud-table td { padding: 10px; border-bottom: 1px solid rgba(0, 229, 255, 0.2); color: #e0e0e0; }
+        .hud-table tr:hover td { background: rgba(0, 229, 255, 0.05); }
+
+        .marksheet-footer {
+            padding: 1rem 1.5rem; border-top: 1px solid var(--neon-blue); background: rgba(0, 0, 0, 0.5);
+            display: flex; justify-content: space-between; font-family: 'Fira Code', monospace; font-size: 1.1rem; font-weight: 600;
+        }
+
+        .hud-total { color: var(--neon-blue); }
+        .hud-percent { color: #2ed573; text-shadow: 0 0 10px rgba(46, 213, 115, 0.5); }
+
+        @keyframes scanline { 0% { transform: translateY(-50%); } 100% { transform: translateY(0%); } }
+        @keyframes fadeInModal { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .clickable-row { cursor: crosshair !important; transition: all 0.2s; }
+        .clickable-row:hover { background: rgba(0, 229, 255, 0.15) !important; box-shadow: inset 0 0 10px var(--neon-blue); }
+        
     </style>
 </head>
 <body>
@@ -191,6 +253,38 @@
     <div class="loader-ring"></div>
     <div class="loading-text">PROCESSING TR DATA...</div>
 </div>
+
+    <div id="marksheetModal">
+    <div class="marksheet-container">
+        <div class="marksheet-header">
+            <div class="student-hud-info">
+                <h4 id="hudName">STUDENT NAME</h4>
+                <p id="hudRoll">ROLL NO: [FETCHING...]</p>
+            </div>
+            <button class="btn-close-modal" onclick="closeMarksheet()">[X] CLOSE SYSTEM</button>
+        </div>
+        <div class="marksheet-body">
+            <table class="hud-table">
+                <thead>
+                    <tr>
+                        <th>Subject Code / Name</th>
+                        <th>Type</th>
+                        <th>Max</th>
+                        <th>Min</th>
+                        <th>Obtained</th>
+                    </tr>
+                </thead>
+                <tbody id="hudTableBody">
+                    </tbody>
+            </table>
+        </div>
+        <div class="marksheet-footer">
+            <div class="hud-total" id="hudTotalScore">TOTAL: 0 / 0</div>
+            <div class="hud-percent" id="hudPercentage">AGGREGATE: 0.00%</div>
+        </div>
+    </div>
+    </div>
+    
 
 <div class="container" id="printableArea">
     <h2>BTEUP Data Analyzer</h2>
@@ -528,7 +622,10 @@
                         statusText = 'PASSED';
                     }
                 }
-
+                // >>> REPLACE YOUR EXISTING tr.innerHTML BLOCK WITH THIS:
+                tr.className = 'clickable-row';
+                tr.onclick = () => showMarksheet(student.roll);
+                tr.title = "CLICK TO INITIATE FULL RECORD SCAN";
                 tr.innerHTML = `
                     <td>${student.roll}</td>
                     <td>${student.name}</td>
@@ -538,6 +635,7 @@
                     <td data-raw="${statusText}">${statusHtml}</td>
                 `;
                 tableBody.appendChild(tr);
+
             }
         });
 
@@ -661,6 +759,79 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } }
         });
     }
+
+        // === FUTURISTIC MARKSHEET LOGIC ===
+    function showMarksheet(rollNumber) {
+        const student = parsedStudents.find(s => s.roll === rollNumber);
+        if(!student) return;
+
+        document.getElementById('hudName').textContent = student.name;
+        document.getElementById('hudRoll').textContent = `ID SEQUENCE: ${student.roll}`;
+
+        const hudTableBody = document.getElementById('hudTableBody');
+        hudTableBody.innerHTML = '';
+
+        let totalMax = 0;
+        let totalObt = 0;
+        const absFlags = ['AA', 'MW', 'A7', 'A', 'A3', 'ABS'];
+
+        // Iterate through all subjects this student has
+        for (const [subjName, data] of Object.entries(student.subjects)) {
+            const isAbs = absFlags.includes(data.obt);
+            let obtainedNum = 0;
+            let displayObt = data.obt;
+
+            if (isAbs) {
+                displayObt = `<span style="color:var(--neon-pink)">ABSENT</span>`;
+            } else {
+                obtainedNum = data.obt.includes('G-') ? parseInt(data.obt.split('G-')[0]) : parseInt(data.obt);
+                if (!isNaN(obtainedNum)) {
+                    totalMax += data.max;
+                    totalObt += obtainedNum;
+                }
+            }
+
+            // Determine if it's theory or practical for UI coloring
+            const codeMatch = subjName.match(/^(\d+)/);
+            let typeBadge = '';
+            if (codeMatch && codeMatch[1].length >= 2) {
+                const code = codeMatch[1];
+                const secondLast = code[code.length - 2];
+                if (secondLast === '0') typeBadge = `<span style="color:var(--neon-blue)">THEORY</span>`;
+                else if (secondLast === '2') typeBadge = `<span style="color:var(--neon-pink)">PRACTICAL</span>`;
+                else typeBadge = `<span style="color:#aaa">OTHER</span>`;
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${subjName}</td>
+                <td>${typeBadge}</td>
+                <td>${data.max}</td>
+                <td>${data.min}</td>
+                <td style="font-weight:bold; color:${isAbs || obtainedNum < data.min ? 'var(--neon-pink)' : '#2ed573'}">${displayObt}</td>
+            `;
+            hudTableBody.appendChild(tr);
+        }
+
+        const percentage = totalMax > 0 ? ((totalObt / totalMax) * 100).toFixed(2) : "0.00";
+        document.getElementById('hudTotalScore').textContent = `SYSTEM SCORE: ${totalObt} / ${totalMax}`;
+        document.getElementById('hudPercentage').textContent = `AGGREGATE: ${percentage}%`;
+
+        document.getElementById('marksheetModal').classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    function closeMarksheet() {
+        document.getElementById('marksheetModal').classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Close modal if clicked outside the box
+    document.getElementById('marksheetModal').addEventListener('click', function(e) {
+        if(e.target === this) { closeMarksheet(); }
+    });
+    
+    
 </script>
 </body>
 </html>
