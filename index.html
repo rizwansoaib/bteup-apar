@@ -356,14 +356,14 @@
         };
         reader.readAsText(file);
     });
-
     function parseComplexData(text) {
         const lines = text.split('\n');
         parsedStudents = [];
         let subjectMap = new Map();
         let currentStudent = null;
 
-        const subjectRegex = /(?:\b|\s)(\d{5,6})\s+([A-Za-z&\-\(\)\/ ]+?)\s+(\d{2,3})\s+(\d{2,3})\s+([A-Z0-9\-]+)/g;
+        // UPDATED REGEX: Now parses subjects with numbers and dots in their names (e.g. Industry 4.0)
+        const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(\d{2,3})\s+(\d{2,3})\s+([A-Z0-9\-]+)/g;
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
