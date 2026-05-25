@@ -303,11 +303,13 @@
                 <div class="suggestion-box" id="suggestionList"></div>
             </div>
         </div>
-               <div id="fileMetaData" class="meta-data-box hidden">
+                       <div id="fileMetaData" class="meta-data-box hidden">
             <h4 id="metaExamName">EXAM CYCLE</h4>
             <p id="metaInstName">INSTITUTE INFO</p>
-               </div>
-        
+            <p id="metaBranches" style="color: var(--neon-pink); margin-top: 5px;"></p>
+            <p id="metaYearSem" style="color: #2ed573;"></p>
+        </div>
+
         <button id="analyzeBtn" class="btn-primary hidden">Start Analyzing...</button>
     </div>
 
@@ -480,15 +482,35 @@
         const lines = text.split('\n');
         parsedStudents = [];
         let subjectMap = new Map();
-        let currentStudent = null;
-                // >>> NEW ADDITION: EXTRACT EXAM AND INSTITUTE METADATA
+        let currentStudent = null;      
+        // >>> NEW ADDITION: EXTRACT EXAM, INSTITUTE, BRANCHES, AND YEAR/SEMESTER
         const examMatch = text.match(/TABULATION CHART FOR.*?$/m);
         const instMatch = text.match(/INST\s*:\s*(.*)$/m);
         
+        // Extract Year or Semester dynamically
+        const yearMatch = text.match(/YEAR\s*:\s*(.*)$/m);
+        const semMatch = text.match(/SEMESTER\s*:\s*(.*)$/m);
+        let yearOrSemText = "UNKNOWN YEAR/SEMESTER";
+        if (yearMatch) {
+            yearOrSemText = `ACADEMIC YEAR: ${yearMatch[1].trim()}`;
+        } else if (semMatch) {
+            yearOrSemText = `SEMESTER: ${semMatch[1].trim()}`;
+        }
+
+        // Extract All Unique Branches in the file
+        const branchMatches = [...text.matchAll(/BRANCH\s*:\s*(.*)$/gm)];
+        const uniqueBranches = [...new Set(branchMatches.map(m => m[1].trim()))];
+        const branchText = uniqueBranches.length > 0 ? `BRANCH(ES): ${uniqueBranches.join(' | ')}` : "UNKNOWN BRANCH";
+        
+        // Update DOM Elements
         document.getElementById('metaExamName').textContent = examMatch ? examMatch[0].trim() : "UNKNOWN EXAM CYCLE";
         document.getElementById('metaInstName').textContent = instMatch ? `INSTITUTE: ${instMatch[1].trim()}` : "UNKNOWN INSTITUTE";
+        document.getElementById('metaBranches').textContent = branchText;
+        document.getElementById('metaYearSem').textContent = yearOrSemText;
+        
         document.getElementById('fileMetaData').classList.remove('hidden');
         // <<< END NEW ADDITION
+
         
 // NEWLY ADDED CODE - REPLACES THE OLD REGEX
 // Broadened \d{2,3} to \d{1,3} to accurately capture single-digit marks like "8"
