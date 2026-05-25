@@ -322,16 +322,19 @@
             </div>
         </h3>
         
-        <div class="results-grid" id="mainStats">
+                <div class="results-grid" id="mainStats">
             <div class="stat-card"><h3>Total Enrolled</h3><p id="resTotal">0</p></div>
             <div class="stat-card"><h3>Absent</h3><p id="resAbsent" class="alert-text">0</p></div>
             <div class="stat-card"><h3>Appeared</h3><p id="resAppeared">0</p></div>
-            <div class="stat-card"><h3>Fail (< 33%)</h3><p id="resFail" class="alert-text">0</p></div>
+            <div class="stat-card"><h3>Fail</h3><p id="resFail" class="alert-text">0</p></div>
+            <div class="stat-card"><h3>Passed</h3><p id="resPassed" class="highlight-text">0</p></div>
+            <div class="stat-card"><h3>Grace Pass</h3><p id="resGrace" style="color: #00e5ff;">0</p></div>
             <div class="stat-card"><h3>33% - 44%</h3><p id="res33">0</p></div>
             <div class="stat-card"><h3>45% - 59%</h3><p id="res45">0</p></div>
             <div class="stat-card"><h3>First Div (60-79%)</h3><p id="res60" class="highlight-text">0</p></div>
             <div class="stat-card"><h3>Honors (80%+)</h3><p id="res80" class="highlight-text">0</p></div>
         </div>
+
 
         <h3 class="section-title">Quality Metrics (APAR Indicators)</h3>
         <div class="results-grid" id="aparStats">
@@ -478,16 +481,16 @@
         };
         reader.readAsText(file);
     });
-        function parseComplexData(text) {
+
+    function parseComplexData(text) {
         const lines = text.split('\n');
         parsedStudents = [];
         let subjectMap = new Map();
         let currentStudent = null;
 
-        // UPDATED REGEX: Made Minimum Marks (\d{1,3}) optional to support Sessional/Student Centered subjects
-        const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(\d{1,3})\s+(?:(\d{1,3})\s+)?([A-Z0-9\-]+)/g;
+        // HIGHLY ADVANCED REGEX: Detects if 2 or 3 marks are provided dynamically
+        const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(\d{1,4})\s+([A-Z0-9\-]+)(?:\s+([A-Z0-9\-]+))?/g;
 
-        // Extract File Metadata
         const examMatch = text.match(/TABULATION CHART FOR.*?$/m);
         const instMatch = text.match(/INST\s*:\s*(.*)$/m);
         const yearMatch = text.match(/YEAR\s*:\s*(.*)$/m);
@@ -516,18 +519,13 @@
             if (rollMatch) {
                 const nameLine = lines[i+1] || "";
                 currentStudent = {
-                    roll: rollMatch[1],
-                    name: nameLine.substring(0, 30).trim() || "UNKNOWN",
-                    subjects: {},
-                    totalObt: 0,
-                    totalMax: 0,
-                    finalStatus: "UNKNOWN"
+                    roll: rollMatch[1], name: nameLine.substring(0, 30).trim() || "UNKNOWN",
+                    subjects: {}, totalObt: 0, totalMax: 0, finalStatus: "UNKNOWN"
                 };
                 parsedStudents.push(currentStudent);
             }
 
             if (currentStudent) {
-                // Extract Grand Total & Official Status from the student's block
                 const resultMatch = line.match(/(\d{3,4})\/(\d{3,4})/);
                 if(resultMatch) {
                     currentStudent.totalObt = parseInt(resultMatch[1]);
@@ -535,9 +533,7 @@
                 }
                 
                 const statusMatch = line.match(/(ELIGIBLE FOR BACK|PASS FIRST DIV|PASSED|PASS|FAIL|WITHHELD|INC)/);
-                if(statusMatch && !line.includes("CODE & NAME")) {
-                    currentStudent.finalStatus = statusMatch[1];
-                }
+                if(statusMatch && !line.includes("CODE & NAME")) currentStudent.finalStatus = statusMatch[1];
 
                 let match;
                 while ((match = subjectRegex.exec(line)) !== null) {
@@ -556,23 +552,32 @@
                         subjectMap.set(fullSubjectName, { id: fullSubjectName, code: code, name: subName, type: type });
                     }
                     
-                    // Assign default 0 to Min marks if it was entirely omitted (like Sessional)
-                    currentStudent.subjects[fullSubjectName] = { 
-                        max: parseInt(match[3]), 
-                        min: match[4] ? parseInt(match[4]) : 0, 
-                        obt: match[5].trim() 
-                    };
+                    let maxMarks = parseInt(match[3]);
+                    let minMarks = 0;
+                    let obtMarks = "";
+
+                    // If match[5] is found, it means MAX MIN OBT format. If undefined, it's MAX OBT (Sessional format)
+                    if(match[5]) {
+                        minMarks = parseInt(match[4]);
+                        obtMarks = match[5].trim();
+                    } else {
+                        minMarks = 0; // Hardcoded fallback to 0 for missing minimums
+                        obtMarks = match[4].trim();
+                    }
+
+                    // Strict hardcode safety net for specific nomenclatures
+                    if(subName.includes("SESSIONAL") || subName.includes("STUDENT CENTRED")) minMarks = 0;
+
+                    currentStudent.subjects[fullSubjectName] = { max: maxMarks, min: minMarks, obt: obtMarks };
                 }
             }
         }
 
         availableSubjects = Array.from(subjectMap.values()).sort((a,b) => a.code.localeCompare(b.code));
-        if (availableSubjects.length > 0) {
-            subjectSelectionDiv.classList.remove('hidden');
-        } else {
-            alert("⚠️ Parsing Error. File format mismatched or no subjects found.");
-        }
+        if (availableSubjects.length > 0) subjectSelectionDiv.classList.remove('hidden');
+        else alert("⚠️ Parsing Error. File format mismatched or no subjects found.");
     }
+
 
 
     // LIVE SUGGESTION LOGIC (AUTOCOMPLETE)
@@ -628,8 +633,8 @@
         showProcessing(() => { processAnalysis(selectedSubject.id); });
     });
 
-    function processAnalysis(targetSubjectId) {
-        let total = 0, absent = 0, appeared = 0, failCount = 0;
+        function processAnalysis(targetSubjectId) {
+        let total = 0, absent = 0, appeared = 0, failCount = 0, graceCount = 0;
         let p33 = 0, p45 = 0, p60 = 0, p80 = 0;
         let apar60 = 0, apar75 = 0;
         
@@ -665,28 +670,33 @@
                     sortValue = -1;
                 } else {
                     appeared++;
-                    const percentage = (numObt / subData.max) * 100;
-
-                    if (percentage >= 80) p80++;
-                    else if (percentage >= 60) p60++;
-                    else if (percentage >= 45) p45++;
-                    else if (percentage >= 33) p33++;
-
-                    if (percentage >= 75) apar75++;
-                    else if (percentage >= 60 && percentage < 75) apar60++;
                     
-                    if (numObt < subData.min && !isGrace) {
-                        statusHtml = `<span class="status-fail">FAILED</span>`;
-                        statusText = 'FAILED';
-                    } else if (isGrace) {
+                    if (isGrace) {
+                        graceCount++; // Extracted from fails
                         statusHtml = `<span class="status-pass" style="color:#00e5ff;">GRACE PASS</span>`;
                         statusText = 'GRACE PASS';
-                    } else if (percentage >= 75) {
-                        statusHtml = `<span class="status-pass">HONORS</span>`;
-                        statusText = 'HONORS';
+                    } else if (numObt < subData.min) {
+                        failCount++;
+                        statusHtml = `<span class="status-fail">FAILED</span>`;
+                        statusText = 'FAILED';
                     } else {
-                        statusHtml = `<span class="status-pass">PASSED</span>`;
-                        statusText = 'PASSED';
+                        // Standard pass logic
+                        const percentage = subData.max > 0 ? (numObt / subData.max) * 100 : 0;
+                        if (percentage >= 80) p80++;
+                        else if (percentage >= 60) p60++;
+                        else if (percentage >= 45) p45++;
+                        else if (percentage >= 33) p33++;
+
+                        if (percentage >= 75) apar75++;
+                        else if (percentage >= 60 && percentage < 75) apar60++;
+
+                        if (percentage >= 75) {
+                            statusHtml = `<span class="status-pass">HONORS</span>`;
+                            statusText = 'HONORS';
+                        } else {
+                            statusHtml = `<span class="status-pass">PASSED</span>`;
+                            statusText = 'PASSED';
+                        }
                     }
                 }
 
@@ -705,12 +715,15 @@
             }
         });
 
-        failCount = appeared - (p33 + p45 + p60 + p80);
+        // Dynamic Passed Calculation factoring in Grace metrics
+        let passedCount = appeared - failCount;
 
         document.getElementById('resTotal').textContent = total;
         document.getElementById('resAbsent').textContent = absent;
         document.getElementById('resAppeared').textContent = appeared;
         document.getElementById('resFail').textContent = failCount;
+        document.getElementById('resPassed').textContent = passedCount;
+        document.getElementById('resGrace').textContent = graceCount;
         document.getElementById('res33').textContent = p33;
         document.getElementById('res45').textContent = p45;
         document.getElementById('res60').textContent = p60;
@@ -719,8 +732,9 @@
         document.getElementById('resApar75').textContent = apar75;
 
         resultsPanel.classList.remove('hidden');
-        renderCharts(failCount, p33 + p45 + p60, p80, absent);
+        renderCharts(failCount, passedCount - graceCount, graceCount, absent);
     }
+
 
     // STUDENT TABLE SEARCH
     studentSearch.addEventListener('input', function(e) {
