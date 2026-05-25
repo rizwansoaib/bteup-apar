@@ -478,44 +478,36 @@
         };
         reader.readAsText(file);
     });
-    function parseComplexData(text) {
+        function parseComplexData(text) {
         const lines = text.split('\n');
         parsedStudents = [];
         let subjectMap = new Map();
-        let currentStudent = null;      
-        // >>> NEW ADDITION: EXTRACT EXAM, INSTITUTE, BRANCHES, AND YEAR/SEMESTER
+        let currentStudent = null;
+
+        // UPDATED REGEX: Made Minimum Marks (\d{1,3}) optional to support Sessional/Student Centered subjects
+        const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(\d{1,3})\s+(?:(\d{1,3})\s+)?([A-Z0-9\-]+)/g;
+
+        // Extract File Metadata
         const examMatch = text.match(/TABULATION CHART FOR.*?$/m);
         const instMatch = text.match(/INST\s*:\s*(.*)$/m);
-        
-        // Extract Year or Semester dynamically
         const yearMatch = text.match(/YEAR\s*:\s*(.*)$/m);
         const semMatch = text.match(/SEMESTER\s*:\s*(.*)$/m);
         let yearOrSemText = "UNKNOWN YEAR/SEMESTER";
-        if (yearMatch) {
-            yearOrSemText = `ACADEMIC YEAR: ${yearMatch[1].trim()}`;
-        } else if (semMatch) {
-            yearOrSemText = `SEMESTER: ${semMatch[1].trim()}`;
-        }
+        if (yearMatch) yearOrSemText = `ACADEMIC YEAR: ${yearMatch[1].trim()}`;
+        else if (semMatch) yearOrSemText = `SEMESTER: ${semMatch[1].trim()}`;
 
-        // Extract All Unique Branches in the file
         const branchMatches = [...text.matchAll(/BRANCH\s*:\s*(.*)$/gm)];
         const uniqueBranches = [...new Set(branchMatches.map(m => m[1].trim()))];
         const branchText = uniqueBranches.length > 0 ? `BRANCH(ES): ${uniqueBranches.join(' | ')}` : "UNKNOWN BRANCH";
         
-        // Update DOM Elements
-        document.getElementById('metaExamName').textContent = examMatch ? examMatch[0].trim() : "UNKNOWN EXAM CYCLE";
-        document.getElementById('metaInstName').textContent = instMatch ? `INSTITUTE: ${instMatch[1].trim()}` : "UNKNOWN INSTITUTE";
-        document.getElementById('metaBranches').textContent = branchText;
-        document.getElementById('metaYearSem').textContent = yearOrSemText;
-        
-        document.getElementById('fileMetaData').classList.remove('hidden');
-        // <<< END NEW ADDITION
-
-        
-// NEWLY ADDED CODE - REPLACES THE OLD REGEX
-// Broadened \d{2,3} to \d{1,3} to accurately capture single-digit marks like "8"
-const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(\d{1,3})\s+(\d{1,3})\s+([A-Z0-9\-]+)/g;
-
+        const elExam = document.getElementById('metaExamName');
+        if(elExam) {
+            elExam.textContent = examMatch ? examMatch[0].trim() : "UNKNOWN EXAM CYCLE";
+            document.getElementById('metaInstName').textContent = instMatch ? `INSTITUTE: ${instMatch[1].trim()}` : "UNKNOWN INSTITUTE";
+            document.getElementById('metaBranches').textContent = branchText;
+            document.getElementById('metaYearSem').textContent = yearOrSemText;
+            document.getElementById('fileMetaData').classList.remove('hidden');
+        }
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -526,19 +518,33 @@ const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(
                 currentStudent = {
                     roll: rollMatch[1],
                     name: nameLine.substring(0, 30).trim() || "UNKNOWN",
-                    subjects: {}
+                    subjects: {},
+                    totalObt: 0,
+                    totalMax: 0,
+                    finalStatus: "UNKNOWN"
                 };
                 parsedStudents.push(currentStudent);
             }
 
             if (currentStudent) {
+                // Extract Grand Total & Official Status from the student's block
+                const resultMatch = line.match(/(\d{3,4})\/(\d{3,4})/);
+                if(resultMatch) {
+                    currentStudent.totalObt = parseInt(resultMatch[1]);
+                    currentStudent.totalMax = parseInt(resultMatch[2]);
+                }
+                
+                const statusMatch = line.match(/(ELIGIBLE FOR BACK|PASS FIRST DIV|PASSED|PASS|FAIL|WITHHELD|INC)/);
+                if(statusMatch && !line.includes("CODE & NAME")) {
+                    currentStudent.finalStatus = statusMatch[1];
+                }
+
                 let match;
                 while ((match = subjectRegex.exec(line)) !== null) {
                     const code = match[1].trim();
                     const subName = match[2].trim();
                     const fullSubjectName = `${code} ${subName}`;
                     
-                    // Determine Theory vs Practical based on 2nd to last digit
                     let type = "Other";
                     if(code.length >= 2) {
                         const secondLast = code[code.length - 2];
@@ -547,29 +553,27 @@ const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(
                     }
 
                     if(!subjectMap.has(fullSubjectName)) {
-                        subjectMap.set(fullSubjectName, {
-                            id: fullSubjectName,
-                            code: code,
-                            name: subName,
-                            type: type
-                        });
+                        subjectMap.set(fullSubjectName, { id: fullSubjectName, code: code, name: subName, type: type });
                     }
                     
+                    // Assign default 0 to Min marks if it was entirely omitted (like Sessional)
                     currentStudent.subjects[fullSubjectName] = { 
-                        max: parseInt(match[3]), min: parseInt(match[4]), obt: match[5].trim() 
+                        max: parseInt(match[3]), 
+                        min: match[4] ? parseInt(match[4]) : 0, 
+                        obt: match[5].trim() 
                     };
                 }
             }
         }
 
         availableSubjects = Array.from(subjectMap.values()).sort((a,b) => a.code.localeCompare(b.code));
-        
         if (availableSubjects.length > 0) {
             subjectSelectionDiv.classList.remove('hidden');
         } else {
             alert("⚠️ Parsing Error. File format mismatched or no subjects found.");
         }
     }
+
 
     // LIVE SUGGESTION LOGIC (AUTOCOMPLETE)
     subjectSearchInput.addEventListener('input', function() {
@@ -642,9 +646,11 @@ const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(
                 const subData = student.subjects[targetSubjectId];
                 const isAbs = absFlags.includes(subData.obt);
                 let numObt = -1;
+                let isGrace = false;
                 
                 if (!isAbs) {
-                    numObt = subData.obt.includes('G-') ? parseInt(subData.obt.split('G-')[0]) : parseInt(subData.obt);
+                    isGrace = subData.obt.includes('G-');
+                    numObt = isGrace ? parseInt(subData.obt.split('G-')[0]) : parseInt(subData.obt);
                 }
 
                 const tr = document.createElement('tr');
@@ -669,9 +675,12 @@ const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(
                     if (percentage >= 75) apar75++;
                     else if (percentage >= 60 && percentage < 75) apar60++;
                     
-                    if (numObt < subData.min) {
+                    if (numObt < subData.min && !isGrace) {
                         statusHtml = `<span class="status-fail">FAILED</span>`;
                         statusText = 'FAILED';
+                    } else if (isGrace) {
+                        statusHtml = `<span class="status-pass" style="color:#00e5ff;">GRACE PASS</span>`;
+                        statusText = 'GRACE PASS';
                     } else if (percentage >= 75) {
                         statusHtml = `<span class="status-pass">HONORS</span>`;
                         statusText = 'HONORS';
@@ -680,7 +689,7 @@ const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(
                         statusText = 'PASSED';
                     }
                 }
-                // >>> REPLACE YOUR EXISTING tr.innerHTML BLOCK WITH THIS:
+
                 tr.className = 'clickable-row';
                 tr.onclick = () => showMarksheet(student.roll);
                 tr.title = "CLICK TO INITIATE FULL RECORD SCAN";
@@ -693,7 +702,6 @@ const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(
                     <td data-raw="${statusText}">${statusHtml}</td>
                 `;
                 tableBody.appendChild(tr);
-
             }
         });
 
@@ -819,7 +827,7 @@ const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(
     }
 
         // === FUTURISTIC MARKSHEET LOGIC ===
-    function showMarksheet(rollNumber) {
+        function showMarksheet(rollNumber) {
         const student = parsedStudents.find(s => s.roll === rollNumber);
         if(!student) return;
 
@@ -829,27 +837,27 @@ const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(
         const hudTableBody = document.getElementById('hudTableBody');
         hudTableBody.innerHTML = '';
 
-        let totalMax = 0;
-        let totalObt = 0;
+        let localTotalMax = 0;
+        let localTotalObt = 0;
         const absFlags = ['AA', 'MW', 'A7', 'A', 'A3', 'ABS'];
 
-        // Iterate through all subjects this student has
         for (const [subjName, data] of Object.entries(student.subjects)) {
             const isAbs = absFlags.includes(data.obt);
+            let isGrace = false;
             let obtainedNum = 0;
             let displayObt = data.obt;
 
             if (isAbs) {
                 displayObt = `<span style="color:var(--neon-pink)">ABSENT</span>`;
             } else {
-                obtainedNum = data.obt.includes('G-') ? parseInt(data.obt.split('G-')[0]) : parseInt(data.obt);
+                isGrace = data.obt.includes('G-');
+                obtainedNum = isGrace ? parseInt(data.obt.split('G-')[0]) : parseInt(data.obt);
                 if (!isNaN(obtainedNum)) {
-                    totalMax += data.max;
-                    totalObt += obtainedNum;
+                    localTotalMax += data.max;
+                    localTotalObt += obtainedNum;
                 }
             }
 
-            // Determine if it's theory or practical for UI coloring
             const codeMatch = subjName.match(/^(\d+)/);
             let typeBadge = '';
             if (codeMatch && codeMatch[1].length >= 2) {
@@ -861,23 +869,31 @@ const subjectRegex = /(?:\b|\s)(\d{5,7})\s+([A-Za-z0-9&\-\(\)\/\.\,\+\* ]+?)\s+(
             }
 
             const tr = document.createElement('tr');
+            // Ensure Grace Marks or Passing Marks display as Green, Failure as Red
+            const valueColor = isAbs || (obtainedNum < data.min && !isGrace) ? 'var(--neon-pink)' : '#2ed573';
+            
             tr.innerHTML = `
                 <td>${subjName}</td>
                 <td>${typeBadge}</td>
                 <td>${data.max}</td>
                 <td>${data.min}</td>
-                <td style="font-weight:bold; color:${isAbs || obtainedNum < data.min ? 'var(--neon-pink)' : '#2ed573'}">${displayObt}</td>
+                <td style="font-weight:bold; color:${valueColor}">${displayObt}</td>
             `;
             hudTableBody.appendChild(tr);
         }
 
-        const percentage = totalMax > 0 ? ((totalObt / totalMax) * 100).toFixed(2) : "0.00";
-        document.getElementById('hudTotalScore').textContent = `SYSTEM SCORE: ${totalObt} / ${totalMax}`;
-        document.getElementById('hudPercentage').textContent = `AGGREGATE: ${percentage}%`;
+        // Favor the Official Extracted Totals, fallback to local calculation if missing
+        const finalTotalObt = student.totalObt || localTotalObt;
+        const finalTotalMax = student.totalMax || localTotalMax;
+        const finalPercentage = finalTotalMax > 0 ? ((finalTotalObt / finalTotalMax) * 100).toFixed(2) : "0.00";
+
+        document.getElementById('hudTotalScore').textContent = `OFFICIAL SCORE: ${finalTotalObt} / ${finalTotalMax}`;
+        document.getElementById('hudPercentage').textContent = `AGGREGATE: ${finalPercentage}% | STATUS: ${student.finalStatus}`;
 
         document.getElementById('marksheetModal').classList.add('active');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        document.body.style.overflow = 'hidden'; 
     }
+
 
     function closeMarksheet() {
         document.getElementById('marksheetModal').classList.remove('active');
