@@ -732,7 +732,7 @@
         document.getElementById('resApar75').textContent = apar75;
 
         resultsPanel.classList.remove('hidden');
-        renderCharts(failCount, passedCount - graceCount, graceCount, absent);
+        renderCharts();
     }
 
 
@@ -798,47 +798,88 @@
     }
 
     // CHARTS
-    function renderCharts(fail, passed, honors, absent) {
+        // === UPDATED CHART.JS INTEGRATION (INCLUDES GRACE PASS) ===
+    function renderCharts() {
         Chart.defaults.color = '#fff';
         Chart.defaults.font.family = 'Poppins';
 
+        // Destroy previous instances to prevent canvas ghosting
         if(pieChartInstance) pieChartInstance.destroy();
         if(barChartInstance) barChartInstance.destroy();
+
+        // Extract synchronized data directly from the DOM Matrix
+        const fail = parseInt(document.getElementById('resFail').textContent) || 0;
+        const totalPassed = parseInt(document.getElementById('resPassed').textContent) || 0;
+        const grace = parseInt(document.getElementById('resGrace').textContent) || 0;
+        const honors = parseInt(document.getElementById('res80').textContent) || 0;
+        const absent = parseInt(document.getElementById('resAbsent').textContent) || 0;
+        
+        // Calculate Normal Pass (Total Passed minus Grace and Honors) for accurate Pie distribution
+        const normalPass = Math.max(0, totalPassed - grace - honors);
 
         const pieCtx = document.getElementById('pieChart').getContext('2d');
         pieChartInstance = new Chart(pieCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Failed', 'Passed', 'Honors', 'Absent'],
+                labels: ['Failed', 'Normal Pass', 'Grace Pass', 'Honors (80%+)', 'Absent'],
                 datasets: [{
-                    data: [fail, passed, honors, absent],
-                    backgroundColor: ['#ff4757', '#2ed573', '#00e5ff', '#ffa502'],
-                    borderWidth: 0, hoverOffset: 10
+                    data: [fail, normalPass, grace, honors, absent],
+                    backgroundColor: [
+                        '#ff4757', // Red for Fail
+                        '#2ed573', // Green for Pass
+                        '#00e5ff', // Neon Blue for Grace
+                        '#7a00ff', // Purple for Honors
+                        '#ffa502'  // Orange for Absent
+                    ],
+                    borderWidth: 0, hoverOffset: 12
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { position: 'bottom', labels: { color: '#e0e0e0', font: { size: 11 } } } 
+                } 
+            }
         });
 
-        const p33 = parseInt(document.getElementById('res33').textContent);
-        const p45 = parseInt(document.getElementById('res45').textContent);
-        const p60 = parseInt(document.getElementById('res60').textContent);
-        const p80 = parseInt(document.getElementById('res80').textContent);
+        // Extract explicit distribution brackets for the Bar Chart
+        const p33 = parseInt(document.getElementById('res33').textContent) || 0;
+        const p45 = parseInt(document.getElementById('res45').textContent) || 0;
+        const p60 = parseInt(document.getElementById('res60').textContent) || 0;
+        const p80 = parseInt(document.getElementById('res80').textContent) || 0;
 
         const barCtx = document.getElementById('barChart').getContext('2d');
         barChartInstance = new Chart(barCtx, {
             type: 'bar',
             data: {
-                labels: ['Fail', '33-44%', '45-59%', '60-79%', '80-100%'],
+                labels: ['Fail', 'Grace Pass', '33-44%', '45-59%', '60-79%', '80-100%'],
                 datasets: [{
-                    label: 'Students',
-                    data: [fail, p33, p45, p60, p80],
-                    backgroundColor: ['rgba(255, 71, 87, 0.8)', 'rgba(255, 165, 2, 0.8)', 'rgba(46, 213, 115, 0.8)', 'rgba(0, 229, 255, 0.8)', 'rgba(122, 0, 255, 0.8)'],
+                    label: 'Number of Students',
+                    data: [fail, grace, p33, p45, p60, p80],
+                    backgroundColor: [
+                        'rgba(255, 71, 87, 0.8)',   // Fail
+                        'rgba(0, 229, 255, 0.8)',   // Grace Pass
+                        'rgba(255, 165, 2, 0.8)',   // 33-44%
+                        'rgba(46, 213, 115, 0.8)',  // 45-59%
+                        'rgba(0, 114, 255, 0.8)',   // 60-79%
+                        'rgba(122, 0, 255, 0.8)'    // 80-100%
+                    ],
                     borderRadius: 6
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }, 
+                scales: { 
+                    y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { precision: 0 } }, 
+                    x: { grid: { display: false } } 
+                } 
+            }
         });
     }
+
 
         // === FUTURISTIC MARKSHEET LOGIC ===
         function showMarksheet(rollNumber) {
